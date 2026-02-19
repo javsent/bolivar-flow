@@ -20,6 +20,11 @@ export default function CurrencyApp() {
   const { user, logout } = useAuth();
   const [confirmLogout, setConfirmLogout] = useState(false);
 
+  const monthNames = [
+    "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+    "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+  ];
+
   // --- ESTADOS UX (Toast) ---
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -373,7 +378,7 @@ export default function CurrencyApp() {
       // CAMBIO: Mostrar nombre del mes en lugar del número
       const currentMonthName = monthNames[histMonth - 1] || histMonth;
       doc.text(`MES: ${currentMonthName} / AÑO: ${histYear}`, pageWidth - 15, 22, { align: 'right', charSpace: 0 });
-      doc.text(`GENERADO POR: ${activeUser}`, pageWidth - 15, 30, { align: 'right', charSpace: 0 });
+      doc.text(`GENERADO POR: ${user}`, pageWidth - 15, 30, { align: 'right', charSpace: 0 });
 
       // --- BLOQUE ESTADÍSTICO DUAL ---
       const usdIni = cronoData[0].usd;
