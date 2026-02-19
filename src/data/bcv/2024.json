@@ -1,0 +1,2222 @@
+{
+  "1": [
+    {
+      "fecha": "31/01/2024",
+      "usd": 36.2032,
+      "euro": 39.21023779,
+      "isWeekend": false
+    },
+    {
+      "fecha": "30/01/2024",
+      "usd": 36.1418,
+      "euro": 39.0714543,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/01/2024",
+      "usd": 36.202,
+      "euro": 39.30704554,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/01/2024",
+      "usd": 36.1186,
+      "euro": 39.16303679,
+      "isWeekend": true
+    },
+    {
+      "fecha": "27/01/2024",
+      "usd": 36.1186,
+      "euro": 39.16303679,
+      "isWeekend": true
+    },
+    {
+      "fecha": "26/01/2024",
+      "usd": 36.1186,
+      "euro": 39.16303679,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/01/2024",
+      "usd": 36.1187,
+      "euro": 39.38419166,
+      "isWeekend": false
+    },
+    {
+      "fecha": "24/01/2024",
+      "usd": 36.1279,
+      "euro": 39.18865568,
+      "isWeekend": false
+    },
+    {
+      "fecha": "23/01/2024",
+      "usd": 36.1104,
+      "euro": 39.3336143,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/01/2024",
+      "usd": 36.1459,
+      "euro": 39.3249319,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/01/2024",
+      "usd": 36.1379,
+      "euro": 39.25298698,
+      "isWeekend": true
+    },
+    {
+      "fecha": "20/01/2024",
+      "usd": 36.1379,
+      "euro": 39.25298698,
+      "isWeekend": true
+    },
+    {
+      "fecha": "19/01/2024",
+      "usd": 36.1379,
+      "euro": 39.25298698,
+      "isWeekend": false
+    },
+    {
+      "fecha": "18/01/2024",
+      "usd": 36.0761,
+      "euro": 39.17539775,
+      "isWeekend": false
+    },
+    {
+      "fecha": "17/01/2024",
+      "usd": 36.0466,
+      "euro": 39.20464262,
+      "isWeekend": false
+    },
+    {
+      "fecha": "16/01/2024",
+      "usd": 35.9744,
+      "euro": 39.37577952,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/01/2024",
+      "usd": 36.0397,
+      "euro": 39.58240251,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/01/2024",
+      "usd": 35.9629,
+      "euro": 39.35995553,
+      "isWeekend": true
+    },
+    {
+      "fecha": "13/01/2024",
+      "usd": 35.9629,
+      "euro": 39.35995553,
+      "isWeekend": true
+    },
+    {
+      "fecha": "12/01/2024",
+      "usd": 35.9629,
+      "euro": 39.35995553,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/01/2024",
+      "usd": 35.9437,
+      "euro": 39.33822302,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/01/2024",
+      "usd": 35.9171,
+      "euro": 39.3019275,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/01/2024",
+      "usd": 35.9385,
+      "euro": 39.38033014,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/01/2024",
+      "usd": 36.0065,
+      "euro": 39.51461329,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/01/2024",
+      "usd": 36.0345,
+      "euro": 39.49164993,
+      "isWeekend": true
+    },
+    {
+      "fecha": "06/01/2024",
+      "usd": 36.0345,
+      "euro": 39.49164993,
+      "isWeekend": true
+    },
+    {
+      "fecha": "05/01/2024",
+      "usd": 36.0345,
+      "euro": 39.49164993,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/01/2024",
+      "usd": 35.9496,
+      "euro": 39.24006688,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/01/2024",
+      "usd": 35.867,
+      "euro": 39.30987333,
+      "isWeekend": false
+    },
+    {
+      "fecha": "02/01/2024",
+      "usd": 35.9593,
+      "euro": 39.81665411,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/01/2024",
+      "usd": 35.9305,
+      "euro": 39.9044133,
+      "isWeekend": true
+    }
+  ],
+  "2": [
+    {
+      "fecha": "29/02/2024",
+      "usd": 36.1304,
+      "euro": 39.11982929,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/02/2024",
+      "usd": 36.0955,
+      "euro": 39.15134503,
+      "isWeekend": false
+    },
+    {
+      "fecha": "27/02/2024",
+      "usd": 36.0706,
+      "euro": 39.11207299,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/02/2024",
+      "usd": 36.0698,
+      "euro": 39.0260808,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/02/2024",
+      "usd": 36.2329,
+      "euro": 39.17138819,
+      "isWeekend": true
+    },
+    {
+      "fecha": "24/02/2024",
+      "usd": 36.2329,
+      "euro": 39.17138819,
+      "isWeekend": true
+    },
+    {
+      "fecha": "23/02/2024",
+      "usd": 36.2329,
+      "euro": 39.17138819,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/02/2024",
+      "usd": 36.2315,
+      "euro": 39.19342512,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/02/2024",
+      "usd": 36.2951,
+      "euro": 39.28182377,
+      "isWeekend": false
+    },
+    {
+      "fecha": "20/02/2024",
+      "usd": 36.2375,
+      "euro": 39.01401725,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/02/2024",
+      "usd": 36.3358,
+      "euro": 39.13183981,
+      "isWeekend": false
+    },
+    {
+      "fecha": "18/02/2024",
+      "usd": 36.2737,
+      "euro": 39.11538165,
+      "isWeekend": true
+    },
+    {
+      "fecha": "17/02/2024",
+      "usd": 36.2737,
+      "euro": 39.11538165,
+      "isWeekend": true
+    },
+    {
+      "fecha": "16/02/2024",
+      "usd": 36.2737,
+      "euro": 39.11538165,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/02/2024",
+      "usd": 36.2609,
+      "euro": 38.85536739,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/02/2024",
+      "usd": 36.3185,
+      "euro": 39.17240773,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/02/2024",
+      "usd": 36.2919,
+      "euro": 39.0635124,
+      "isWeekend": true
+    },
+    {
+      "fecha": "12/02/2024",
+      "usd": 36.2919,
+      "euro": 39.0635124,
+      "isWeekend": true
+    },
+    {
+      "fecha": "11/02/2024",
+      "usd": 36.2919,
+      "euro": 39.0635124,
+      "isWeekend": true
+    },
+    {
+      "fecha": "10/02/2024",
+      "usd": 36.2919,
+      "euro": 39.0635124,
+      "isWeekend": true
+    },
+    {
+      "fecha": "09/02/2024",
+      "usd": 36.2919,
+      "euro": 39.0635124,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/02/2024",
+      "usd": 36.2375,
+      "euro": 39.03539737,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/02/2024",
+      "usd": 36.2556,
+      "euro": 38.96171798,
+      "isWeekend": false
+    },
+    {
+      "fecha": "06/02/2024",
+      "usd": 36.2534,
+      "euro": 38.8998982,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/02/2024",
+      "usd": 36.2859,
+      "euro": 39.16046899,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/02/2024",
+      "usd": 36.2352,
+      "euro": 39.2427216,
+      "isWeekend": true
+    },
+    {
+      "fecha": "03/02/2024",
+      "usd": 36.2352,
+      "euro": 39.2427216,
+      "isWeekend": true
+    },
+    {
+      "fecha": "02/02/2024",
+      "usd": 36.2352,
+      "euro": 39.2427216,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/02/2024",
+      "usd": 36.2601,
+      "euro": 39.43575955,
+      "isWeekend": false
+    }
+  ],
+  "3": [
+    {
+      "fecha": "31/03/2024",
+      "usd": 36.334,
+      "euro": 39.37915254,
+      "isWeekend": true
+    },
+    {
+      "fecha": "30/03/2024",
+      "usd": 36.334,
+      "euro": 39.37915254,
+      "isWeekend": true
+    },
+    {
+      "fecha": "29/03/2024",
+      "usd": 36.334,
+      "euro": 39.37915254,
+      "isWeekend": true
+    },
+    {
+      "fecha": "28/03/2024",
+      "usd": 36.334,
+      "euro": 39.37915254,
+      "isWeekend": true
+    },
+    {
+      "fecha": "27/03/2024",
+      "usd": 36.334,
+      "euro": 39.37915254,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/03/2024",
+      "usd": 36.3006,
+      "euro": 39.32988507,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/03/2024",
+      "usd": 36.3555,
+      "euro": 39.33265189,
+      "isWeekend": false
+    },
+    {
+      "fecha": "24/03/2024",
+      "usd": 36.3217,
+      "euro": 39.47406034,
+      "isWeekend": true
+    },
+    {
+      "fecha": "23/03/2024",
+      "usd": 36.3217,
+      "euro": 39.47406034,
+      "isWeekend": true
+    },
+    {
+      "fecha": "22/03/2024",
+      "usd": 36.3217,
+      "euro": 39.47406034,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/03/2024",
+      "usd": 36.2861,
+      "euro": 39.37803858,
+      "isWeekend": false
+    },
+    {
+      "fecha": "20/03/2024",
+      "usd": 36.2653,
+      "euro": 39.48565864,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/03/2024",
+      "usd": 36.3167,
+      "euro": 39.53690178,
+      "isWeekend": true
+    },
+    {
+      "fecha": "18/03/2024",
+      "usd": 36.3167,
+      "euro": 39.53690178,
+      "isWeekend": false
+    },
+    {
+      "fecha": "17/03/2024",
+      "usd": 36.276,
+      "euro": 39.4918674,
+      "isWeekend": true
+    },
+    {
+      "fecha": "16/03/2024",
+      "usd": 36.276,
+      "euro": 39.4918674,
+      "isWeekend": true
+    },
+    {
+      "fecha": "15/03/2024",
+      "usd": 36.276,
+      "euro": 39.4918674,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/03/2024",
+      "usd": 36.2633,
+      "euro": 39.68256655,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/03/2024",
+      "usd": 36.2368,
+      "euro": 39.543408,
+      "isWeekend": false
+    },
+    {
+      "fecha": "12/03/2024",
+      "usd": 36.2005,
+      "euro": 39.53999612,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/03/2024",
+      "usd": 36.1903,
+      "euro": 39.60847383,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/03/2024",
+      "usd": 36.1331,
+      "euro": 39.43385868,
+      "isWeekend": true
+    },
+    {
+      "fecha": "09/03/2024",
+      "usd": 36.1331,
+      "euro": 39.43385868,
+      "isWeekend": true
+    },
+    {
+      "fecha": "08/03/2024",
+      "usd": 36.1331,
+      "euro": 39.43385868,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/03/2024",
+      "usd": 36.1726,
+      "euro": 39.37242819,
+      "isWeekend": false
+    },
+    {
+      "fecha": "06/03/2024",
+      "usd": 36.1318,
+      "euro": 39.2752666,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/03/2024",
+      "usd": 36.0933,
+      "euro": 39.20634712,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/03/2024",
+      "usd": 36.0801,
+      "euro": 39.06356346,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/03/2024",
+      "usd": 36.1518,
+      "euro": 39.22361844,
+      "isWeekend": true
+    },
+    {
+      "fecha": "02/03/2024",
+      "usd": 36.1518,
+      "euro": 39.22361844,
+      "isWeekend": true
+    },
+    {
+      "fecha": "01/03/2024",
+      "usd": 36.1518,
+      "euro": 39.22361844,
+      "isWeekend": false
+    }
+  ],
+  "4": [
+    {
+      "fecha": "30/04/2024",
+      "usd": 36.4262,
+      "euro": 39.03431592,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/04/2024",
+      "usd": 36.4324,
+      "euro": 38.92291886,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/04/2024",
+      "usd": 36.4311,
+      "euro": 39.02900174,
+      "isWeekend": true
+    },
+    {
+      "fecha": "27/04/2024",
+      "usd": 36.4311,
+      "euro": 39.02900174,
+      "isWeekend": true
+    },
+    {
+      "fecha": "26/04/2024",
+      "usd": 36.4311,
+      "euro": 39.02900174,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/04/2024",
+      "usd": 36.4231,
+      "euro": 38.93374428,
+      "isWeekend": false
+    },
+    {
+      "fecha": "24/04/2024",
+      "usd": 36.3877,
+      "euro": 38.92465044,
+      "isWeekend": false
+    },
+    {
+      "fecha": "23/04/2024",
+      "usd": 36.3506,
+      "euro": 38.69121513,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/04/2024",
+      "usd": 36.3421,
+      "euro": 38.75158123,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/04/2024",
+      "usd": 36.3265,
+      "euro": 38.65575518,
+      "isWeekend": true
+    },
+    {
+      "fecha": "20/04/2024",
+      "usd": 36.3265,
+      "euro": 38.65575518,
+      "isWeekend": true
+    },
+    {
+      "fecha": "19/04/2024",
+      "usd": 36.3265,
+      "euro": 38.65575518,
+      "isWeekend": true
+    },
+    {
+      "fecha": "18/04/2024",
+      "usd": 36.3265,
+      "euro": 38.65575518,
+      "isWeekend": false
+    },
+    {
+      "fecha": "17/04/2024",
+      "usd": 36.2974,
+      "euro": 38.60518869,
+      "isWeekend": false
+    },
+    {
+      "fecha": "16/04/2024",
+      "usd": 36.2889,
+      "euro": 38.58780181,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/04/2024",
+      "usd": 36.2947,
+      "euro": 38.58416967,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/04/2024",
+      "usd": 36.2804,
+      "euro": 38.8476011,
+      "isWeekend": true
+    },
+    {
+      "fecha": "13/04/2024",
+      "usd": 36.2804,
+      "euro": 38.8476011,
+      "isWeekend": true
+    },
+    {
+      "fecha": "12/04/2024",
+      "usd": 36.2804,
+      "euro": 38.8476011,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/04/2024",
+      "usd": 36.1883,
+      "euro": 38.89156601,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/04/2024",
+      "usd": 36.2251,
+      "euro": 39.32524405,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/04/2024",
+      "usd": 36.1809,
+      "euro": 39.27617599,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/04/2024",
+      "usd": 36.2274,
+      "euro": 39.22268143,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/04/2024",
+      "usd": 36.2105,
+      "euro": 39.34524298,
+      "isWeekend": true
+    },
+    {
+      "fecha": "06/04/2024",
+      "usd": 36.2105,
+      "euro": 39.34524298,
+      "isWeekend": true
+    },
+    {
+      "fecha": "05/04/2024",
+      "usd": 36.2105,
+      "euro": 39.34524298,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/04/2024",
+      "usd": 36.2493,
+      "euro": 39.25001705,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/04/2024",
+      "usd": 36.286,
+      "euro": 39.07603054,
+      "isWeekend": false
+    },
+    {
+      "fecha": "02/04/2024",
+      "usd": 36.2611,
+      "euro": 38.94986056,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/04/2024",
+      "usd": 36.2896,
+      "euro": 39.25700059,
+      "isWeekend": false
+    }
+  ],
+  "5": [
+    {
+      "fecha": "31/05/2024",
+      "usd": 36.5372,
+      "euro": 39.61144,
+      "isWeekend": false
+    },
+    {
+      "fecha": "30/05/2024",
+      "usd": 36.5114,
+      "euro": 39.48853955,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/05/2024",
+      "usd": 36.5103,
+      "euro": 39.70276063,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/05/2024",
+      "usd": 36.5119,
+      "euro": 39.64535125,
+      "isWeekend": false
+    },
+    {
+      "fecha": "27/05/2024",
+      "usd": 36.5129,
+      "euro": 39.62087804,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/05/2024",
+      "usd": 36.5219,
+      "euro": 39.54299156,
+      "isWeekend": true
+    },
+    {
+      "fecha": "25/05/2024",
+      "usd": 36.5219,
+      "euro": 39.54299156,
+      "isWeekend": true
+    },
+    {
+      "fecha": "24/05/2024",
+      "usd": 36.5219,
+      "euro": 39.54299156,
+      "isWeekend": false
+    },
+    {
+      "fecha": "23/05/2024",
+      "usd": 36.5464,
+      "euro": 39.61008471,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/05/2024",
+      "usd": 36.5589,
+      "euro": 39.70552452,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/05/2024",
+      "usd": 36.5703,
+      "euro": 39.74423633,
+      "isWeekend": false
+    },
+    {
+      "fecha": "20/05/2024",
+      "usd": 36.5717,
+      "euro": 39.7578265,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/05/2024",
+      "usd": 36.6265,
+      "euro": 39.81483682,
+      "isWeekend": true
+    },
+    {
+      "fecha": "18/05/2024",
+      "usd": 36.6265,
+      "euro": 39.81483682,
+      "isWeekend": true
+    },
+    {
+      "fecha": "17/05/2024",
+      "usd": 36.6265,
+      "euro": 39.81483682,
+      "isWeekend": false
+    },
+    {
+      "fecha": "16/05/2024",
+      "usd": 36.6042,
+      "euro": 39.77448976,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/05/2024",
+      "usd": 36.5949,
+      "euro": 39.59055851,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/05/2024",
+      "usd": 36.6101,
+      "euro": 39.42651499,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/05/2024",
+      "usd": 36.5865,
+      "euro": 39.42634413,
+      "isWeekend": true
+    },
+    {
+      "fecha": "12/05/2024",
+      "usd": 36.5865,
+      "euro": 39.42634413,
+      "isWeekend": true
+    },
+    {
+      "fecha": "11/05/2024",
+      "usd": 36.5865,
+      "euro": 39.42634413,
+      "isWeekend": true
+    },
+    {
+      "fecha": "10/05/2024",
+      "usd": 36.5865,
+      "euro": 39.42634413,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/05/2024",
+      "usd": 36.5828,
+      "euro": 39.31334019,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/05/2024",
+      "usd": 36.5621,
+      "euro": 39.41065321,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/05/2024",
+      "usd": 36.5763,
+      "euro": 39.42595953,
+      "isWeekend": false
+    },
+    {
+      "fecha": "06/05/2024",
+      "usd": 36.5849,
+      "euro": 39.40230314,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/05/2024",
+      "usd": 36.5099,
+      "euro": 39.05500512,
+      "isWeekend": true
+    },
+    {
+      "fecha": "04/05/2024",
+      "usd": 36.5099,
+      "euro": 39.05500512,
+      "isWeekend": true
+    },
+    {
+      "fecha": "03/05/2024",
+      "usd": 36.5099,
+      "euro": 39.05500512,
+      "isWeekend": false
+    },
+    {
+      "fecha": "02/05/2024",
+      "usd": 36.473,
+      "euro": 38.99911998,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/05/2024",
+      "usd": 36.4262,
+      "euro": 39.03431592,
+      "isWeekend": true
+    }
+  ],
+  "6": [
+    {
+      "fecha": "30/06/2024",
+      "usd": 36.4085,
+      "euro": 39.01753311,
+      "isWeekend": true
+    },
+    {
+      "fecha": "29/06/2024",
+      "usd": 36.4085,
+      "euro": 39.01753311,
+      "isWeekend": true
+    },
+    {
+      "fecha": "28/06/2024",
+      "usd": 36.4085,
+      "euro": 39.01753311,
+      "isWeekend": false
+    },
+    {
+      "fecha": "27/06/2024",
+      "usd": 36.3823,
+      "euro": 38.9101422,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/06/2024",
+      "usd": 36.3655,
+      "euro": 38.93799547,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/06/2024",
+      "usd": 36.3725,
+      "euro": 38.87092702,
+      "isWeekend": false
+    },
+    {
+      "fecha": "24/06/2024",
+      "usd": 36.3789,
+      "euro": 39.0080031,
+      "isWeekend": true
+    },
+    {
+      "fecha": "23/06/2024",
+      "usd": 36.3789,
+      "euro": 39.0080031,
+      "isWeekend": true
+    },
+    {
+      "fecha": "22/06/2024",
+      "usd": 36.3789,
+      "euro": 39.0080031,
+      "isWeekend": true
+    },
+    {
+      "fecha": "21/06/2024",
+      "usd": 36.3789,
+      "euro": 39.0080031,
+      "isWeekend": false
+    },
+    {
+      "fecha": "20/06/2024",
+      "usd": 36.3831,
+      "euro": 39.09364095,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/06/2024",
+      "usd": 36.3939,
+      "euro": 39.08668466,
+      "isWeekend": false
+    },
+    {
+      "fecha": "18/06/2024",
+      "usd": 36.4176,
+      "euro": 38.95408584,
+      "isWeekend": false
+    },
+    {
+      "fecha": "17/06/2024",
+      "usd": 36.4296,
+      "euro": 39.22265743,
+      "isWeekend": true
+    },
+    {
+      "fecha": "16/06/2024",
+      "usd": 36.4296,
+      "euro": 39.22265743,
+      "isWeekend": true
+    },
+    {
+      "fecha": "15/06/2024",
+      "usd": 36.4296,
+      "euro": 39.22265743,
+      "isWeekend": true
+    },
+    {
+      "fecha": "14/06/2024",
+      "usd": 36.4296,
+      "euro": 39.22265743,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/06/2024",
+      "usd": 36.4497,
+      "euro": 39.55448544,
+      "isWeekend": false
+    },
+    {
+      "fecha": "12/06/2024",
+      "usd": 36.4385,
+      "euro": 39.08247756,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/06/2024",
+      "usd": 36.45,
+      "euro": 39.130533,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/06/2024",
+      "usd": 36.4787,
+      "euro": 39.42508459,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/06/2024",
+      "usd": 36.4882,
+      "euro": 39.68347167,
+      "isWeekend": true
+    },
+    {
+      "fecha": "08/06/2024",
+      "usd": 36.4882,
+      "euro": 39.68347167,
+      "isWeekend": true
+    },
+    {
+      "fecha": "07/06/2024",
+      "usd": 36.4882,
+      "euro": 39.68347167,
+      "isWeekend": false
+    },
+    {
+      "fecha": "06/06/2024",
+      "usd": 36.524,
+      "euro": 39.70085752,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/06/2024",
+      "usd": 36.5408,
+      "euro": 39.75310172,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/06/2024",
+      "usd": 36.5344,
+      "euro": 39.6332478,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/06/2024",
+      "usd": 36.5372,
+      "euro": 39.61144,
+      "isWeekend": true
+    },
+    {
+      "fecha": "02/06/2024",
+      "usd": 36.5372,
+      "euro": 39.61144,
+      "isWeekend": true
+    },
+    {
+      "fecha": "01/06/2024",
+      "usd": 36.5372,
+      "euro": 39.61144,
+      "isWeekend": true
+    }
+  ],
+  "7": [
+    {
+      "fecha": "31/07/2024",
+      "usd": 36.6128,
+      "euro": 39.55427235,
+      "isWeekend": false
+    },
+    {
+      "fecha": "30/07/2024",
+      "usd": 36.609,
+      "euro": 39.62338506,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/07/2024",
+      "usd": 36.6074,
+      "euro": 39.74611847,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/07/2024",
+      "usd": 36.5797,
+      "euro": 39.72043304,
+      "isWeekend": true
+    },
+    {
+      "fecha": "27/07/2024",
+      "usd": 36.5797,
+      "euro": 39.72043304,
+      "isWeekend": true
+    },
+    {
+      "fecha": "26/07/2024",
+      "usd": 36.5797,
+      "euro": 39.72043304,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/07/2024",
+      "usd": 36.559,
+      "euro": 39.66468705,
+      "isWeekend": false
+    },
+    {
+      "fecha": "24/07/2024",
+      "usd": 36.5314,
+      "euro": 39.75821856,
+      "isWeekend": true
+    },
+    {
+      "fecha": "23/07/2024",
+      "usd": 36.5314,
+      "euro": 39.75821856,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/07/2024",
+      "usd": 36.6066,
+      "euro": 39.85616788,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/07/2024",
+      "usd": 36.5724,
+      "euro": 39.90158557,
+      "isWeekend": true
+    },
+    {
+      "fecha": "20/07/2024",
+      "usd": 36.5724,
+      "euro": 39.90158557,
+      "isWeekend": true
+    },
+    {
+      "fecha": "19/07/2024",
+      "usd": 36.5724,
+      "euro": 39.90158557,
+      "isWeekend": false
+    },
+    {
+      "fecha": "18/07/2024",
+      "usd": 36.5407,
+      "euro": 39.96054411,
+      "isWeekend": false
+    },
+    {
+      "fecha": "17/07/2024",
+      "usd": 36.506,
+      "euro": 39.72509908,
+      "isWeekend": false
+    },
+    {
+      "fecha": "16/07/2024",
+      "usd": 36.5004,
+      "euro": 39.8588018,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/07/2024",
+      "usd": 36.5243,
+      "euro": 39.83851498,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/07/2024",
+      "usd": 36.5303,
+      "euro": 39.70624428,
+      "isWeekend": true
+    },
+    {
+      "fecha": "13/07/2024",
+      "usd": 36.5303,
+      "euro": 39.70624428,
+      "isWeekend": true
+    },
+    {
+      "fecha": "12/07/2024",
+      "usd": 36.5303,
+      "euro": 39.70624428,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/07/2024",
+      "usd": 36.5134,
+      "euro": 39.52319956,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/07/2024",
+      "usd": 36.5056,
+      "euro": 39.4899328,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/07/2024",
+      "usd": 36.4888,
+      "euro": 39.52795215,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/07/2024",
+      "usd": 36.5123,
+      "euro": 39.48367097,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/07/2024",
+      "usd": 36.4779,
+      "euro": 39.41838351,
+      "isWeekend": true
+    },
+    {
+      "fecha": "06/07/2024",
+      "usd": 36.4779,
+      "euro": 39.41838351,
+      "isWeekend": true
+    },
+    {
+      "fecha": "05/07/2024",
+      "usd": 36.4779,
+      "euro": 39.41838351,
+      "isWeekend": true
+    },
+    {
+      "fecha": "04/07/2024",
+      "usd": 36.4779,
+      "euro": 39.41838351,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/07/2024",
+      "usd": 36.4672,
+      "euro": 39.15592665,
+      "isWeekend": false
+    },
+    {
+      "fecha": "02/07/2024",
+      "usd": 36.4551,
+      "euro": 39.08788732,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/07/2024",
+      "usd": 36.4462,
+      "euro": 39.04044051,
+      "isWeekend": false
+    }
+  ],
+  "8": [
+    {
+      "fecha": "31/08/2024",
+      "usd": 36.6259,
+      "euro": 40.54999892,
+      "isWeekend": true
+    },
+    {
+      "fecha": "30/08/2024",
+      "usd": 36.6259,
+      "euro": 40.54999892,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/08/2024",
+      "usd": 36.5919,
+      "euro": 40.74581248,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/08/2024",
+      "usd": 36.5883,
+      "euro": 40.85632519,
+      "isWeekend": false
+    },
+    {
+      "fecha": "27/08/2024",
+      "usd": 36.5633,
+      "euro": 40.83828103,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/08/2024",
+      "usd": 36.5888,
+      "euro": 40.94798963,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/08/2024",
+      "usd": 36.6967,
+      "euro": 40.76709796,
+      "isWeekend": true
+    },
+    {
+      "fecha": "24/08/2024",
+      "usd": 36.6967,
+      "euro": 40.76709796,
+      "isWeekend": true
+    },
+    {
+      "fecha": "23/08/2024",
+      "usd": 36.6967,
+      "euro": 40.76709796,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/08/2024",
+      "usd": 36.6484,
+      "euro": 40.7805071,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/08/2024",
+      "usd": 36.683,
+      "euro": 40.73463735,
+      "isWeekend": false
+    },
+    {
+      "fecha": "20/08/2024",
+      "usd": 36.6848,
+      "euro": 40.33126912,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/08/2024",
+      "usd": 36.6768,
+      "euro": 40.29313248,
+      "isWeekend": true
+    },
+    {
+      "fecha": "18/08/2024",
+      "usd": 36.6768,
+      "euro": 40.29313248,
+      "isWeekend": true
+    },
+    {
+      "fecha": "17/08/2024",
+      "usd": 36.6768,
+      "euro": 40.29313248,
+      "isWeekend": true
+    },
+    {
+      "fecha": "16/08/2024",
+      "usd": 36.6768,
+      "euro": 40.29313248,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/08/2024",
+      "usd": 36.6132,
+      "euro": 40.37044658,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/08/2024",
+      "usd": 36.6561,
+      "euro": 40.15859035,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/08/2024",
+      "usd": 36.6305,
+      "euro": 40.05435283,
+      "isWeekend": false
+    },
+    {
+      "fecha": "12/08/2024",
+      "usd": 36.6658,
+      "euro": 40.05371992,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/08/2024",
+      "usd": 36.6827,
+      "euro": 39.98304251,
+      "isWeekend": true
+    },
+    {
+      "fecha": "10/08/2024",
+      "usd": 36.6827,
+      "euro": 39.98304251,
+      "isWeekend": true
+    },
+    {
+      "fecha": "09/08/2024",
+      "usd": 36.6827,
+      "euro": 39.98304251,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/08/2024",
+      "usd": 36.6806,
+      "euro": 40.11096971,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/08/2024",
+      "usd": 36.6642,
+      "euro": 40.07800366,
+      "isWeekend": false
+    },
+    {
+      "fecha": "06/08/2024",
+      "usd": 36.6527,
+      "euro": 40.21167717,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/08/2024",
+      "usd": 36.6555,
+      "euro": 40.02560667,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/08/2024",
+      "usd": 36.6423,
+      "euro": 39.52678185,
+      "isWeekend": true
+    },
+    {
+      "fecha": "03/08/2024",
+      "usd": 36.6423,
+      "euro": 39.52678185,
+      "isWeekend": true
+    },
+    {
+      "fecha": "02/08/2024",
+      "usd": 36.6423,
+      "euro": 39.52678185,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/08/2024",
+      "usd": 36.6368,
+      "euro": 39.65787052,
+      "isWeekend": false
+    }
+  ],
+  "9": [
+    {
+      "fecha": "30/09/2024",
+      "usd": 36.9086,
+      "euro": 41.23354974,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/09/2024",
+      "usd": 36.8655,
+      "euro": 41.17839484,
+      "isWeekend": true
+    },
+    {
+      "fecha": "28/09/2024",
+      "usd": 36.8655,
+      "euro": 41.17839484,
+      "isWeekend": true
+    },
+    {
+      "fecha": "27/09/2024",
+      "usd": 36.8655,
+      "euro": 41.17839484,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/09/2024",
+      "usd": 36.8507,
+      "euro": 41.13311984,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/09/2024",
+      "usd": 36.8105,
+      "euro": 41.06800243,
+      "isWeekend": false
+    },
+    {
+      "fecha": "24/09/2024",
+      "usd": 36.813,
+      "euro": 40.96440201,
+      "isWeekend": false
+    },
+    {
+      "fecha": "23/09/2024",
+      "usd": 36.823,
+      "euro": 41.03702412,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/09/2024",
+      "usd": 36.8013,
+      "euro": 40.96794318,
+      "isWeekend": true
+    },
+    {
+      "fecha": "21/09/2024",
+      "usd": 36.8013,
+      "euro": 40.96794318,
+      "isWeekend": true
+    },
+    {
+      "fecha": "20/09/2024",
+      "usd": 36.8013,
+      "euro": 40.96794318,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/09/2024",
+      "usd": 36.7789,
+      "euro": 40.89041323,
+      "isWeekend": false
+    },
+    {
+      "fecha": "18/09/2024",
+      "usd": 36.7702,
+      "euro": 40.88515308,
+      "isWeekend": false
+    },
+    {
+      "fecha": "17/09/2024",
+      "usd": 36.7751,
+      "euro": 40.77806963,
+      "isWeekend": false
+    },
+    {
+      "fecha": "16/09/2024",
+      "usd": 36.741,
+      "euro": 40.5436935,
+      "isWeekend": true
+    },
+    {
+      "fecha": "15/09/2024",
+      "usd": 36.741,
+      "euro": 40.5436935,
+      "isWeekend": true
+    },
+    {
+      "fecha": "14/09/2024",
+      "usd": 36.741,
+      "euro": 40.5436935,
+      "isWeekend": true
+    },
+    {
+      "fecha": "13/09/2024",
+      "usd": 36.741,
+      "euro": 40.5436935,
+      "isWeekend": false
+    },
+    {
+      "fecha": "12/09/2024",
+      "usd": 36.7323,
+      "euro": 40.45254734,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/09/2024",
+      "usd": 36.7062,
+      "euro": 40.46051013,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/09/2024",
+      "usd": 36.6854,
+      "euro": 40.49811362,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/09/2024",
+      "usd": 36.6958,
+      "euro": 40.75839201,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/09/2024",
+      "usd": 36.6846,
+      "euro": 40.65130579,
+      "isWeekend": true
+    },
+    {
+      "fecha": "07/09/2024",
+      "usd": 36.6846,
+      "euro": 40.65130579,
+      "isWeekend": true
+    },
+    {
+      "fecha": "06/09/2024",
+      "usd": 36.6846,
+      "euro": 40.65130579,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/09/2024",
+      "usd": 36.6436,
+      "euro": 40.6011088,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/09/2024",
+      "usd": 36.6391,
+      "euro": 40.45726061,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/09/2024",
+      "usd": 36.6386,
+      "euro": 40.5431756,
+      "isWeekend": false
+    },
+    {
+      "fecha": "02/09/2024",
+      "usd": 36.6454,
+      "euro": 40.56535843,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/09/2024",
+      "usd": 36.6259,
+      "euro": 40.54999892,
+      "isWeekend": true
+    }
+  ],
+  "10": [
+    {
+      "fecha": "31/10/2024",
+      "usd": 42.5622,
+      "euro": 46.19828874,
+      "isWeekend": false
+    },
+    {
+      "fecha": "30/10/2024",
+      "usd": 42.2256,
+      "euro": 45.5614224,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/10/2024",
+      "usd": 41.7361,
+      "euro": 45.17849352,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/10/2024",
+      "usd": 41.0429,
+      "euro": 44.42319324,
+      "isWeekend": false
+    },
+    {
+      "fecha": "27/10/2024",
+      "usd": 40.8803,
+      "euro": 44.14704477,
+      "isWeekend": true
+    },
+    {
+      "fecha": "26/10/2024",
+      "usd": 40.8803,
+      "euro": 44.14704477,
+      "isWeekend": true
+    },
+    {
+      "fecha": "25/10/2024",
+      "usd": 40.8803,
+      "euro": 44.14704477,
+      "isWeekend": false
+    },
+    {
+      "fecha": "24/10/2024",
+      "usd": 39.4617,
+      "euro": 42.53695028,
+      "isWeekend": false
+    },
+    {
+      "fecha": "23/10/2024",
+      "usd": 39.323,
+      "euro": 42.51366822,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/10/2024",
+      "usd": 39.1813,
+      "euro": 42.41767538,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/10/2024",
+      "usd": 39.1699,
+      "euro": 42.52793552,
+      "isWeekend": false
+    },
+    {
+      "fecha": "20/10/2024",
+      "usd": 39.1344,
+      "euro": 42.37511966,
+      "isWeekend": true
+    },
+    {
+      "fecha": "19/10/2024",
+      "usd": 39.1344,
+      "euro": 42.37511966,
+      "isWeekend": true
+    },
+    {
+      "fecha": "18/10/2024",
+      "usd": 39.1344,
+      "euro": 42.37511966,
+      "isWeekend": false
+    },
+    {
+      "fecha": "17/10/2024",
+      "usd": 39.0116,
+      "euro": 42.44071964,
+      "isWeekend": false
+    },
+    {
+      "fecha": "16/10/2024",
+      "usd": 38.9179,
+      "euro": 42.44230502,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/10/2024",
+      "usd": 38.888,
+      "euro": 42.43691888,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/10/2024",
+      "usd": 38.8857,
+      "euro": 42.57634178,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/10/2024",
+      "usd": 37.6502,
+      "euro": 41.133973,
+      "isWeekend": true
+    },
+    {
+      "fecha": "12/10/2024",
+      "usd": 37.6502,
+      "euro": 41.133973,
+      "isWeekend": true
+    },
+    {
+      "fecha": "11/10/2024",
+      "usd": 37.6502,
+      "euro": 41.133973,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/10/2024",
+      "usd": 37.5295,
+      "euro": 41.10531076,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/10/2024",
+      "usd": 37.074,
+      "euro": 40.66498764,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/10/2024",
+      "usd": 37.0397,
+      "euro": 40.64884836,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/10/2024",
+      "usd": 37.0358,
+      "euro": 40.60419933,
+      "isWeekend": false
+    },
+    {
+      "fecha": "06/10/2024",
+      "usd": 36.9855,
+      "euro": 40.74100767,
+      "isWeekend": true
+    },
+    {
+      "fecha": "05/10/2024",
+      "usd": 36.9855,
+      "euro": 40.74100767,
+      "isWeekend": true
+    },
+    {
+      "fecha": "04/10/2024",
+      "usd": 36.9855,
+      "euro": 40.74100767,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/10/2024",
+      "usd": 36.9812,
+      "euro": 40.82650517,
+      "isWeekend": false
+    },
+    {
+      "fecha": "02/10/2024",
+      "usd": 36.9187,
+      "euro": 40.84463455,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/10/2024",
+      "usd": 36.9227,
+      "euro": 41.18690262,
+      "isWeekend": false
+    }
+  ],
+  "11": [
+    {
+      "fecha": "30/11/2024",
+      "usd": 47.3138,
+      "euro": 49.92079038,
+      "isWeekend": true
+    },
+    {
+      "fecha": "29/11/2024",
+      "usd": 47.3138,
+      "euro": 49.92079038,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/11/2024",
+      "usd": 46.8554,
+      "euro": 49.40058532,
+      "isWeekend": false
+    },
+    {
+      "fecha": "27/11/2024",
+      "usd": 46.7537,
+      "euro": 49.07735889,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/11/2024",
+      "usd": 46.6427,
+      "euro": 48.93332299,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/11/2024",
+      "usd": 46.6176,
+      "euro": 48.54337305,
+      "isWeekend": false
+    },
+    {
+      "fecha": "24/11/2024",
+      "usd": 46.3273,
+      "euro": 48.74512178,
+      "isWeekend": true
+    },
+    {
+      "fecha": "23/11/2024",
+      "usd": 46.3273,
+      "euro": 48.74512178,
+      "isWeekend": true
+    },
+    {
+      "fecha": "22/11/2024",
+      "usd": 46.3273,
+      "euro": 48.74512178,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/11/2024",
+      "usd": 46.0588,
+      "euro": 48.49623169,
+      "isWeekend": false
+    },
+    {
+      "fecha": "20/11/2024",
+      "usd": 45.841,
+      "euro": 48.53736762,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/11/2024",
+      "usd": 45.7894,
+      "euro": 48.25699076,
+      "isWeekend": false
+    },
+    {
+      "fecha": "18/11/2024",
+      "usd": 45.507,
+      "euro": 48.07177452,
+      "isWeekend": true
+    },
+    {
+      "fecha": "17/11/2024",
+      "usd": 45.507,
+      "euro": 48.07177452,
+      "isWeekend": true
+    },
+    {
+      "fecha": "16/11/2024",
+      "usd": 45.507,
+      "euro": 48.07177452,
+      "isWeekend": true
+    },
+    {
+      "fecha": "15/11/2024",
+      "usd": 45.507,
+      "euro": 48.07177452,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/11/2024",
+      "usd": 45.053,
+      "euro": 47.60795563,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/11/2024",
+      "usd": 44.9289,
+      "euro": 47.70999891,
+      "isWeekend": false
+    },
+    {
+      "fecha": "12/11/2024",
+      "usd": 44.7544,
+      "euro": 47.61957668,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/11/2024",
+      "usd": 44.7035,
+      "euro": 48.05536843,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/11/2024",
+      "usd": 44.1861,
+      "euro": 47.80803461,
+      "isWeekend": true
+    },
+    {
+      "fecha": "09/11/2024",
+      "usd": 44.1861,
+      "euro": 47.80803461,
+      "isWeekend": true
+    },
+    {
+      "fecha": "08/11/2024",
+      "usd": 44.1861,
+      "euro": 47.80803461,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/11/2024",
+      "usd": 43.7822,
+      "euro": 46.95903643,
+      "isWeekend": false
+    },
+    {
+      "fecha": "06/11/2024",
+      "usd": 43.4576,
+      "euro": 47.4013772,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/11/2024",
+      "usd": 42.8569,
+      "euro": 46.51516498,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/11/2024",
+      "usd": 42.7101,
+      "euro": 46.36651166,
+      "isWeekend": true
+    },
+    {
+      "fecha": "03/11/2024",
+      "usd": 42.7101,
+      "euro": 46.36651166,
+      "isWeekend": true
+    },
+    {
+      "fecha": "02/11/2024",
+      "usd": 42.7101,
+      "euro": 46.36651166,
+      "isWeekend": true
+    },
+    {
+      "fecha": "01/11/2024",
+      "usd": 42.7101,
+      "euro": 46.36651166,
+      "isWeekend": false
+    }
+  ],
+  "12": [
+    {
+      "fecha": "31/12/2024",
+      "usd": 51.9345,
+      "euro": 54.10692013,
+      "isWeekend": true
+    },
+    {
+      "fecha": "30/12/2024",
+      "usd": 51.9345,
+      "euro": 54.10692013,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/12/2024",
+      "usd": 51.7659,
+      "euro": 53.85931299,
+      "isWeekend": true
+    },
+    {
+      "fecha": "28/12/2024",
+      "usd": 51.7659,
+      "euro": 53.85931299,
+      "isWeekend": true
+    },
+    {
+      "fecha": "27/12/2024",
+      "usd": 51.7659,
+      "euro": 53.85931299,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/12/2024",
+      "usd": 51.64,
+      "euro": 53.6735832,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/12/2024",
+      "usd": 51.5398,
+      "euro": 53.60912297,
+      "isWeekend": true
+    },
+    {
+      "fecha": "24/12/2024",
+      "usd": 51.5398,
+      "euro": 53.60912297,
+      "isWeekend": true
+    },
+    {
+      "fecha": "23/12/2024",
+      "usd": 51.5398,
+      "euro": 53.60912297,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/12/2024",
+      "usd": 51.3504,
+      "euro": 53.405443,
+      "isWeekend": true
+    },
+    {
+      "fecha": "21/12/2024",
+      "usd": 51.3504,
+      "euro": 53.405443,
+      "isWeekend": true
+    },
+    {
+      "fecha": "20/12/2024",
+      "usd": 51.3504,
+      "euro": 53.405443,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/12/2024",
+      "usd": 50.9545,
+      "euro": 53.44006051,
+      "isWeekend": false
+    },
+    {
+      "fecha": "18/12/2024",
+      "usd": 50.5419,
+      "euro": 53.04220779,
+      "isWeekend": false
+    },
+    {
+      "fecha": "17/12/2024",
+      "usd": 50.371,
+      "euro": 52.83212706,
+      "isWeekend": false
+    },
+    {
+      "fecha": "16/12/2024",
+      "usd": 50.3319,
+      "euro": 52.76997723,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/12/2024",
+      "usd": 49.9068,
+      "euro": 52.47949554,
+      "isWeekend": true
+    },
+    {
+      "fecha": "14/12/2024",
+      "usd": 49.9068,
+      "euro": 52.47949554,
+      "isWeekend": true
+    },
+    {
+      "fecha": "13/12/2024",
+      "usd": 49.9068,
+      "euro": 52.47949554,
+      "isWeekend": false
+    },
+    {
+      "fecha": "12/12/2024",
+      "usd": 49.4757,
+      "euro": 51.9712543,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/12/2024",
+      "usd": 49.1111,
+      "euro": 51.70907719,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/12/2024",
+      "usd": 48.8695,
+      "euro": 51.66972235,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/12/2024",
+      "usd": 48.7903,
+      "euro": 51.49181891,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/12/2024",
+      "usd": 48.3265,
+      "euro": 51.01586972,
+      "isWeekend": true
+    },
+    {
+      "fecha": "07/12/2024",
+      "usd": 48.3265,
+      "euro": 51.01586972,
+      "isWeekend": true
+    },
+    {
+      "fecha": "06/12/2024",
+      "usd": 48.3265,
+      "euro": 51.01586972,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/12/2024",
+      "usd": 48.1183,
+      "euro": 50.71187637,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/12/2024",
+      "usd": 47.8552,
+      "euro": 50.33409936,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/12/2024",
+      "usd": 47.7293,
+      "euro": 50.00121468,
+      "isWeekend": false
+    },
+    {
+      "fecha": "02/12/2024",
+      "usd": 47.6074,
+      "euro": 50.26389292,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/12/2024",
+      "usd": 47.3138,
+      "euro": 49.92079038,
+      "isWeekend": true
+    }
+  ]
+}

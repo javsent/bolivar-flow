@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- CONFIGURACIÓN BASE --- */
+:root {
+  --foreground-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  /* IMPORTANTE: Fondo transparente para que funcione el borde redondeado */
+  background: transparent !important;
+  /* Evita que aparezcan barras de scroll dobles o blancas */
+  overflow: hidden;
+  /* Hace que la app se sienta nativa (no se puede seleccionar texto general) */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* --- LÓGICA DE ARRASTRE DE VENTANA (ELECTRON) --- */
+
+/* 1. Por defecto, toda la ventana sirve para arrastrarla */
+body {
+  -webkit-app-region: drag;
+}
+
+/* 2. EXCEPCIONES: Elementos interactivos */
+/* Todo lo que esté aquí será CLICKEABLE y NO arrastrará la ventana */
+button, 
+input, 
+select, 
+textarea,
+a, 
+[role="button"],
+.no-drag {
+  -webkit-app-region: no-drag !important;
+  cursor: pointer;
+}
+
+/* 3. Permitir seleccionar texto SOLO dentro de inputs y textareas */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* --- UTILIDADES --- */
+
+/* Ocultar barra de scroll pero permitir desplazamiento */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Animaciones suaves para la carga */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* --- BARRA DE SCROLL PERSONALIZADA --- */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #10b981;
+}
+
+/* Soporte para Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}

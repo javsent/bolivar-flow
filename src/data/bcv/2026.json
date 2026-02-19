@@ -1,0 +1,276 @@
+{
+  "1": [
+    {
+      "fecha": "31/01/2026",
+      "usd": 367.3069,
+      "euro": 439.46801357,
+      "isWeekend": true
+    },
+    {
+      "fecha": "30/01/2026",
+      "usd": 367.3069,
+      "euro": 439.46801357,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/01/2026",
+      "usd": 363.6623,
+      "euro": 434.42734695,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/01/2026",
+      "usd": 361.4906,
+      "euro": 432.71509291,
+      "isWeekend": false
+    },
+    {
+      "fecha": "27/01/2026",
+      "usd": 358.9247,
+      "euro": 426.18718878,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/01/2026",
+      "usd": 355.5528,
+      "euro": 417.58609701,
+      "isWeekend": false
+    },
+    {
+      "fecha": "25/01/2026",
+      "usd": 352.7063,
+      "euro": 413.38941891,
+      "isWeekend": true
+    },
+    {
+      "fecha": "24/01/2026",
+      "usd": 352.7063,
+      "euro": 413.38941891,
+      "isWeekend": true
+    },
+    {
+      "fecha": "23/01/2026",
+      "usd": 352.7063,
+      "euro": 413.38941891,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/01/2026",
+      "usd": 349.9272,
+      "euro": 409.64927522,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/01/2026",
+      "usd": 347.2631,
+      "euro": 407.17293001,
+      "isWeekend": false
+    },
+    {
+      "fecha": "20/01/2026",
+      "usd": 344.5071,
+      "euro": 400.49294882,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/01/2026",
+      "usd": 341.7425,
+      "euro": 396.47939622,
+      "isWeekend": true
+    },
+    {
+      "fecha": "18/01/2026",
+      "usd": 341.7425,
+      "euro": 396.47939622,
+      "isWeekend": true
+    },
+    {
+      "fecha": "17/01/2026",
+      "usd": 341.7425,
+      "euro": 396.47939622,
+      "isWeekend": true
+    },
+    {
+      "fecha": "16/01/2026",
+      "usd": 341.7425,
+      "euro": 396.47939622,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/01/2026",
+      "usd": 339.1495,
+      "euro": 395.26856776,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/01/2026",
+      "usd": 336.4596,
+      "euro": 391.8845899,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/01/2026",
+      "usd": 330.3751,
+      "euro": 384.33196133,
+      "isWeekend": false
+    },
+    {
+      "fecha": "12/01/2026",
+      "usd": 325.3894,
+      "euro": 379.64157466,
+      "isWeekend": true
+    },
+    {
+      "fecha": "11/01/2026",
+      "usd": 325.3894,
+      "euro": 379.64157466,
+      "isWeekend": true
+    },
+    {
+      "fecha": "10/01/2026",
+      "usd": 325.3894,
+      "euro": 379.64157466,
+      "isWeekend": true
+    },
+    {
+      "fecha": "09/01/2026",
+      "usd": 325.3894,
+      "euro": 379.64157466,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/01/2026",
+      "usd": 321.0323,
+      "euro": 375.30923096,
+      "isWeekend": false
+    },
+    {
+      "fecha": "07/01/2026",
+      "usd": 311.8814,
+      "euro": 364.83886172,
+      "isWeekend": false
+    },
+    {
+      "fecha": "06/01/2026",
+      "usd": 308.1546,
+      "euro": 360.50390344,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/01/2026",
+      "usd": 304.6796,
+      "euro": 357.88579854,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/01/2026",
+      "usd": 301.3709,
+      "euro": 354.49354854,
+      "isWeekend": true
+    },
+    {
+      "fecha": "03/01/2026",
+      "usd": 301.3709,
+      "euro": 354.49354854,
+      "isWeekend": true
+    },
+    {
+      "fecha": "02/01/2026",
+      "usd": 301.3709,
+      "euro": 354.49354854,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/01/2026",
+      "usd": 298.1431,
+      "euro": 351.24536754,
+      "isWeekend": true
+    }
+  ],
+  "2": [
+    {
+      "fecha": "18/02/2026",
+      "usd": 396.3674,
+      "euro": 470.28199275,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/02/2026",
+      "usd": 393.2216,
+      "euro": 467.33207495,
+      "isWeekend": false
+    },
+    {
+      "fecha": "12/02/2026",
+      "usd": 390.2944,
+      "euro": 463.0843056,
+      "isWeekend": false
+    },
+    {
+      "fecha": "11/02/2026",
+      "usd": 388.7394,
+      "euro": 462.78259351,
+      "isWeekend": false
+    },
+    {
+      "fecha": "10/02/2026",
+      "usd": 385.272,
+      "euro": 458.8782156,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/02/2026",
+      "usd": 382.6318,
+      "euro": 451.87667684,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/02/2026",
+      "usd": 381.1074,
+      "euro": 449.85917496,
+      "isWeekend": true
+    },
+    {
+      "fecha": "07/02/2026",
+      "usd": 381.1074,
+      "euro": 449.85917496,
+      "isWeekend": true
+    },
+    {
+      "fecha": "06/02/2026",
+      "usd": 381.1074,
+      "euro": 449.85917496,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/02/2026",
+      "usd": 378.4582,
+      "euro": 447.21648577,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/02/2026",
+      "usd": 375.0825,
+      "euro": 442.58984835,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/02/2026",
+      "usd": 372.1057,
+      "euro": 439.63916349,
+      "isWeekend": false
+    },
+    {
+      "fecha": "02/02/2026",
+      "usd": 370.2544,
+      "euro": 440.4768495,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/02/2026",
+      "usd": 367.3069,
+      "euro": 439.46801357,
+      "isWeekend": true
+    }
+  ]
+}
