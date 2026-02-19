@@ -187,8 +187,14 @@ export default function CurrencyApp() {
       if (found && dayData) {
         setRates(prev => ({ ...prev, bcv: dayData.usd, euro: dayData.euro }));
         setIsHistoricalRate(true);
-        setDisplayDate(dayData.fecha); // Mostramos la fecha real de la tasa
-        if (dayData.fecha !== new Date(newDate + "T12:00:00").toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })) {
+
+        // CORRECCIÓN: Mostramos la fecha que el usuario seleccionó, no la de la tasa hallada
+        const selectedDateFormatted = new Date(newDate + "T12:00:00").toLocaleDateString('es-ES', {
+          day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+        setDisplayDate(selectedDateFormatted);
+
+        if (dayData.fecha !== selectedDateFormatted) {
           showToast(`Usando tasa del día ${dayData.fecha}`);
         }
       } else {
