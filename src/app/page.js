@@ -290,6 +290,19 @@ export default function CurrencyApp() {
     }
   };
 
+  const handleInvert = () => {
+    // Intercambiar dirección
+    const nextIsForeignToVes = !isForeignToVes;
+    setIsForeignToVes(nextIsForeignToVes);
+
+    // Intercambiar valores
+    const newAmount = new Intl.NumberFormat('de-DE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(converted);
+    setAmount(newAmount);
+  };
+
   useEffect(() => {
     const rateVal = rates[activeRate] || 0;
     const cleanAmountStr = amount.replace(/\./g, '').replace(',', '.');
@@ -773,7 +786,7 @@ export default function CurrencyApp() {
               </div>
 
               <div className="flex justify-center">
-                <button onClick={() => setIsForeignToVes(!isForeignToVes)} className="bg-[#10b981] p-3 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all">
+                <button onClick={handleInvert} className="bg-[#10b981] p-3 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all">
                   <ArrowsUpDownIcon className="h-6 w-6 text-slate-900" />
                 </button>
               </div>
