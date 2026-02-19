@@ -20,11 +20,6 @@ export default function CurrencyApp() {
   const { user, logout } = useAuth();
   const [confirmLogout, setConfirmLogout] = useState(false);
 
-  const monthNames = [
-    "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
-    "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
-  ];
-
   // --- ESTADOS UX (Toast) ---
   const [toastMessage, setToastMessage] = useState(null);
 

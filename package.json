@@ -5,6 +5,8 @@
   "author": "Rybak Software",
   "scripts": {
     "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
     "electron": "electron .",
     "dist": "npm run build && electron-builder"
   },
