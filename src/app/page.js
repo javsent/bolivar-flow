@@ -577,15 +577,14 @@ export default function CurrencyApp() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto flex justify-end mb-4">
+      <div className="max-w-4xl mx-auto flex items-center justify-between mb-4 px-1">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hola, <span className="text-white italic">{user}</span></p>
+        </div>
         <button onClick={handleLogoutClick} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 text-[10px] font-bold uppercase tracking-widest group animate-in slide-in-from-right-2 ${confirmLogout ? 'bg-amber-500 text-white border-amber-400 scale-105 shadow-lg shadow-amber-900/20' : 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'}`}>
           {confirmLogout ? <><ExclamationTriangleIcon className="h-4 w-4" /> ¿Confirmar?</> : <><ArrowRightOnRectangleIcon className="h-4 w-4" /> Salir</>}
         </button>
-      </div>
-
-      <div className="max-w-4xl mx-auto mb-4 flex items-center justify-start gap-2">
-        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hola, <span className="text-white italic">{user}</span></p>
       </div>
 
       <div className="w-full max-w-md bg-[#1e293b] p-1 rounded-xl mb-4 flex border border-[#334155] shadow-md relative z-20">
