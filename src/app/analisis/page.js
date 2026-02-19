@@ -304,7 +304,7 @@ export default function AnalisisDiferencial() {
 
   return (
     <div className="p-4 md:p-8 text-white bg-[#0f172a] min-h-screen font-sans relative">
-      <div className="max-w-4xl mx-auto flex items-center justify-between mb-4">
+      <div className="w-full max-w-4xl mx-auto flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hola, <span className="text-white italic">{user}</span></p>

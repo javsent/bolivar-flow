@@ -577,7 +577,7 @@ export default function CurrencyApp() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto flex items-center justify-between mb-4 px-1">
+      <div className="w-full max-w-md flex items-center justify-between mb-4 px-1">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hola, <span className="text-white italic">{user}</span></p>
