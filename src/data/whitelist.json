@@ -1,11 +1,32 @@
 {
-  "authorized": [
-    "@blancaRybak",
-    "@diegoDelgado",
-    "@javierRybak",
-    "@davidPina",
-    "Rybakasa",
-    "@invitado",
-    "@admin"
+  "users": [
+    {
+      "user": "@blancaRybak",
+      "pass": "blanca"
+    },
+    {
+      "user": "@diegoDelgado",
+      "pass": "diego"
+    },
+    {
+      "user": "@javierRybak",
+      "pass": "javier"
+    },
+    {
+      "user": "@davidPina",
+      "pass": "david"
+    },
+    {
+      "user": "Rybakasa",
+      "pass": "rybak"
+    },
+    {
+      "user": "@invitado",
+      "pass": "invitado"
+    },
+    {
+      "user": "@admin",
+      "pass": "admin123"
+    }
   ]
 }

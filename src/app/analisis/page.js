@@ -2,65 +2,29 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import Link from 'next/link';
-import { 
-  ArrowLeftIcon, 
-  DocumentArrowDownIcon, 
-  BoltIcon, 
-  ArrowRightOnRectangleIcon, 
-  ExclamationTriangleIcon 
+import { useAuth } from '@/context/AuthContext';
+import { cleanAmount, formatCurrency, formatFriendlyDate } from '@/lib/utils';
+import {
+  ArrowLeftIcon,
+  DocumentArrowDownIcon,
+  BoltIcon,
+  ArrowRightOnRectangleIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import whitelist from '@/data/whitelist.json'; 
 
 export default function AnalisisDiferencial() {
-  // --- ESTADOS ---
-  const [isAuth, setIsAuth] = useState(false);
-  const [userInput, setUserInput] = useState('');
-  const [authError, setAuthError] = useState(false);
-  const [activeUser, setActiveUser] = useState('');
+  const { user, logout } = useAuth();
   const [confirmLogout, setConfirmLogout] = useState(false);
-  const [rawDataExcel, setRawDataExcel] = useState(null); 
-  const [historicoGlobal, setHistoricoGlobal] = useState(null); 
-  const [moneda, setMoneda] = useState('usd'); 
+
+  // --- ESTADOS FUNCIONALES ---
+  const [rawDataExcel, setRawDataExcel] = useState(null);
+  const [historicoGlobal, setHistoricoGlobal] = useState(null);
+  const [moneda, setMoneda] = useState('usd');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [resumen, setResumen] = useState(null);
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem('rybak_user');
-    if (savedUser && whitelist.authorized.includes(savedUser)) {
-      setIsAuth(true);
-      setActiveUser(savedUser);
-    }
-  }, []);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    const cleanUser = userInput.trim();
-    if (whitelist.authorized.includes(cleanUser)) {
-      localStorage.setItem('rybak_user', cleanUser);
-      setIsAuth(true);
-      setActiveUser(cleanUser);
-      setAuthError(false);
-    } else {
-      setAuthError(true);
-      setTimeout(() => setAuthError(false), 2000);
-    }
-  };
-
-  const handleLogout = () => {
-    if (!confirmLogout) {
-      setConfirmLogout(true);
-      setTimeout(() => setConfirmLogout(false), 3000);
-    } else {
-      localStorage.removeItem('rybak_user');
-      setIsAuth(false);
-      setActiveUser('');
-      setUserInput('');
-      setConfirmLogout(false);
-    }
-  };
 
   // --- LÓGICA DE FECHAS ---
   const parseAnyDate = (input) => {
@@ -75,7 +39,7 @@ export default function AnalisisDiferencial() {
       const parts = cleanStr.split('/');
       if (parts.length === 3) {
         let day, month, year;
-        if (parts[0].length === 4) { [year, month, day] = parts; } 
+        if (parts[0].length === 4) { [year, month, day] = parts; }
         else { [day, month, year] = parts; }
         if (year.length === 2) year = "20" + year;
         const date = new Date(year, month - 1, day);
@@ -119,7 +83,7 @@ export default function AnalisisDiferencial() {
 
   const procesarDiferencial = (excelRows, tasasMes, currency) => {
     if (!excelRows || !tasasMes || excelRows.length < 2) return;
-    const indexSaldoFinal = excelRows.findIndex(row => 
+    const indexSaldoFinal = excelRows.findIndex(row =>
       row.Concepto && row.Concepto.toString().toUpperCase().includes("SALDO FINAL")
     );
     const movimientos = indexSaldoFinal !== -1 ? excelRows.slice(0, indexSaldoFinal) : excelRows.slice(0, -1);
@@ -134,10 +98,10 @@ export default function AnalisisDiferencial() {
       const egrBs = cleanAmount(row.Debe);
       const montoBs = ingBs - egrBs;
       const montoUsd = tasaDia > 0 ? montoBs / tasaDia : 0;
-      return { 
+      return {
         fecha: infoTasa ? infoTasa.fecha : fechaStr,
-        tasa: tasaDia, montoBs, montoUsd, 
-        ingUsd: ingBs > 0 ? montoUsd : 0, egrUsd: egrBs > 0 ? Math.abs(montoUsd) : 0 
+        tasa: tasaDia, montoBs, montoUsd,
+        ingUsd: ingBs > 0 ? montoUsd : 0, egrUsd: egrBs > 0 ? Math.abs(montoUsd) : 0
       };
     });
 
@@ -152,11 +116,11 @@ export default function AnalisisDiferencial() {
     const saldoTeorico = totalIn - totalOut;
 
     setData(processed);
-    setResumen({ 
-      saldoTeorico, saldoRealUsd, diferencial: saldoRealUsd - saldoTeorico, 
-      porcentaje: saldoTeorico !== 0 ? ((saldoRealUsd - saldoTeorico) / Math.abs(saldoTeorico)) * 100 : 0, 
-      tasaCierre, fechaCierre: infoTasaFin ? infoTasaFin.fecha : fechaFinStr, 
-      saldoFinalBs, totalIn, totalOut 
+    setResumen({
+      saldoTeorico, saldoRealUsd, diferencial: saldoRealUsd - saldoTeorico,
+      porcentaje: saldoTeorico !== 0 ? ((saldoRealUsd - saldoTeorico) / Math.abs(saldoTeorico)) * 100 : 0,
+      tasaCierre, fechaCierre: infoTasaFin ? infoTasaFin.fecha : fechaFinStr,
+      saldoFinalBs, totalIn, totalOut
     });
   };
 
@@ -219,8 +183,8 @@ export default function AnalisisDiferencial() {
 
     // --- GRÁFICO MEJORADO SIN SOLAPAMIENTO ---
     const chartYBase = doc.lastAutoTable.finalY + 30;
-    const chartX = 75; 
-    const chartW = 75; 
+    const chartX = 75;
+    const chartW = 75;
     const chartH = 55; // Aumentamos altura para montos verticales
 
     doc.setFontSize(10); doc.setTextColor(30, 41, 59);
@@ -239,18 +203,18 @@ export default function AnalisisDiferencial() {
 
     // Función auxiliar para texto vertical con reborde
     const drawVerticalAmount = (text, x, barHeight, yBase) => {
-        doc.saveGraphicsState();
-        doc.setFontSize(9);
-        // Reborde negro para legibilidad
-        doc.setDrawColor(0, 0, 0);
-        doc.setLineWidth(0.3);
-        doc.setTextColor(255, 255, 255);
-        
-        // El texto se coloca en el centro de la barra
-        const textY = yBase + chartH - (barHeight / 2);
-        // Rotación 90 grados
-        doc.text(text, x + 12, textY, { angle: 90, align: 'center', renderingMode: 'fillAndStroke' });
-        doc.restoreGraphicsState();
+      doc.saveGraphicsState();
+      doc.setFontSize(9);
+      // Reborde negro para legibilidad
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.3);
+      doc.setTextColor(255, 255, 255);
+
+      // El texto se coloca en el centro de la barra
+      const textY = yBase + chartH - (barHeight / 2);
+      // Rotación 90 grados
+      doc.text(text, x + 12, textY, { angle: 90, align: 'center', renderingMode: 'fillAndStroke' });
+      doc.restoreGraphicsState();
     };
 
     // Barra Teórica
@@ -272,7 +236,7 @@ export default function AnalisisDiferencial() {
     doc.setLineWidth(0.4);
     doc.setLineDash([1.5, 1], 0);
     doc.line(chartX + 20, chartYBase + chartH - hTeorico, chartX + 45, chartYBase + chartH - hReal);
-    
+
     // Etiqueta de diferencial centrada sobre la línea de conexión
     const midX = chartX + 24;
     const midY = (chartYBase + chartH - hTeorico + chartYBase + chartH - hReal) / 2;
@@ -284,22 +248,22 @@ export default function AnalisisDiferencial() {
     autoTable(doc, {
       startY: chartYBase + chartH + 25,
       head: [['Fecha', `Tasa ${moneda.toUpperCase()}`, 'Monto Bs.', `Valor ${simbolo}`]],
-      body: data.map(row => [row.fecha, row.tasa.toFixed(2), row.montoBs.toLocaleString('de-DE', {minimumFractionDigits: 2}), `${simbolo}${row.montoUsd.toFixed(2)}`]),
-      foot: [['SALDO FINAL REAL', resumen.tasaCierre.toFixed(2), resumen.saldoFinalBs.toLocaleString('de-DE', {minimumFractionDigits: 2}), `${simbolo}${resumen.saldoRealUsd.toFixed(2)}`]],
+      body: data.map(row => [row.fecha, row.tasa.toFixed(2), row.montoBs.toLocaleString('de-DE', { minimumFractionDigits: 2 }), `${simbolo}${row.montoUsd.toFixed(2)}`]),
+      foot: [['SALDO FINAL REAL', resumen.tasaCierre.toFixed(2), resumen.saldoFinalBs.toLocaleString('de-DE', { minimumFractionDigits: 2 }), `${simbolo}${resumen.saldoRealUsd.toFixed(2)}`]],
       showFoot: 'lastPage',
       didParseCell: (data) => {
         if (data.section === 'body' && data.column.index === 3) {
-            const val = parseFloat(data.cell.raw.replace(/[^0-9.-]+/g,""));
-            if (val > 0) data.cell.styles.textColor = [37, 99, 235]; // Azul
-            if (val < 0) data.cell.styles.textColor = [220, 38, 38]; // Rojo
+          const val = parseFloat(data.cell.raw.replace(/[^0-9.-]+/g, ""));
+          if (val > 0) data.cell.styles.textColor = [37, 99, 235]; // Azul
+          if (val < 0) data.cell.styles.textColor = [220, 38, 38]; // Rojo
         }
       },
-      headStyles: { fillColor: [16, 185, 129] }, 
+      headStyles: { fillColor: [16, 185, 129] },
       footStyles: { fillColor: [30, 41, 59] },
-      didDrawPage: (data) => { 
-        doc.setFontSize(8); 
-        doc.setTextColor(150); 
-        doc.text("Reporte generado por rybak.Software @ 2026", 14, pageHeight - 10); 
+      didDrawPage: (data) => {
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text("Reporte generado por rybak.Software @ 2026", 14, pageHeight - 10);
       }
     });
 
@@ -313,7 +277,7 @@ export default function AnalisisDiferencial() {
       ["INSTRUCCIÓN 1 (FECHAS):", "Las celdas de fechas deben estar formateadas como TEXTO en excel para evitar errores a la hora de la lectura. Formato DD/MM/AAAA (Ej: 01/03/2025)."],
       ["INSTRUCCIÓN 2 (MONTOS):", "No use separadores de miles (puntos). Use coma para decimales."],
       ["INSTRUCCIÓN 3 (ESTRUCTURA):", "La tabla DEBE empezar con 'Saldo Inicial' y terminar con 'Saldo Final'."],
-      [""], 
+      [""],
       ["Fecha", "Concepto", "Debe (Egreso Bs)", "Haber (Ingreso Bs)"],
       ["01/03/2025", "Saldo Inicial de Mes", 0, 10000.00],
       ["05/03/2025", "Gasto Operativo", 2500.00, 0],
@@ -328,84 +292,27 @@ export default function AnalisisDiferencial() {
     XLSX.writeFile(wb, "Formato_Auditoria_Rybak.xlsx");
   };
 
-// --- CUADRO DE AUTENTICACION/LOGIN INICIA ---//
-if (!isAuth) {
-    return (
-      <div className="fixed inset-0 z-[100] bg-[#0f172a] flex items-center justify-center p-4 font-sans">
-        <div className="w-full max-w-md bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-2xl text-center animate-in zoom-in duration-300">
-          <div className="mb-6">
-            <BoltIcon className="h-12 w-12 text-blue-500 mx-auto mb-2 animate-pulse" />
-            <h1 className="text-2xl font-black uppercase tracking-tighter text-emerald-400">
-              BOLÍVAR <span className="text-blue-500">FLOW</span>
-            </h1>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Calculadora Monetaria</p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="text"
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              placeholder="@usuario"
-              className={`w-full bg-slate-900 border ${authError ? 'border-red-500 animate-pulse' : 'border-slate-700'} rounded-xl p-4 text-center text-white outline-none focus:border-emerald-500 transition-all font-mono`}
-            />
-            
-            <div className="flex flex-col gap-3">
-              <button
-                type="submit"
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase py-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-900/20"
-              >
-                Acceder al Sistema
-              </button>
-
-              {/* Botón de Invitado: Reutiliza la lógica de login con valor predefinido */}
-              <button
-                type="button"
-                onClick={() => {
-                  setUserInput('@invitado');
-                  // Forzamos el login inmediato con el usuario @invitado
-                  const loginEvent = { preventDefault: () => {} };
-                  setTimeout(() => {
-                     // Usamos una pequeña demora para asegurar que el estado de userInput se procese o 
-                     // simplemente llamamos a la lógica manualmente
-                    if (whitelist.authorized.includes('@invitado')) {
-                        localStorage.setItem('rybak_user', '@invitado');
-                        setIsAuth(true);
-                        setActiveUser('@invitado');}
-
-                  }, 10);
-                }}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold uppercase py-3 rounded-xl transition-all active:scale-95 border border-slate-700 text-[11px] tracking-widest"
-              >
-                Entrar como Invitado
-              </button>
-              <p className="text-[8px] text-slate-300 items-center align-middle uppercase tracking-widest pt-0"> Contacto: rybak.software@gmail.com</p>
-              <p className="text-[6px] text-slate-500 items-center align-middle uppercase tracking-widest pt-0"> Rybak.Software © 2026 - Todos los derechos reservados</p>
-            </div>
-          </form>
-
-          {authError && (
-            <p className="text-red-400 text-[9px] font-bold uppercase mt-4 tracking-wider animate-in fade-in">
-              Acceso denegado: Usuario no autorizado
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  }
-// --- CUADRO DE AUTENTICACION/LOGIN TERMINA ---//
+  const handleLogoutClick = () => {
+    if (!confirmLogout) {
+      setConfirmLogout(true);
+      setTimeout(() => setConfirmLogout(false), 3000);
+    } else {
+      logout();
+      setConfirmLogout(false);
+    }
+  };
 
   return (
     <div className="p-4 md:p-8 text-white bg-[#0f172a] min-h-screen font-sans relative">
       <div className="max-w-4xl mx-auto flex justify-end mb-4">
-        <button onClick={handleLogout} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 text-[10px] font-bold uppercase tracking-widest group animate-in slide-in-from-right-2 ${confirmLogout ? 'bg-amber-500 text-white border-amber-400 scale-105 shadow-lg shadow-amber-900/20' : 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'}`}>
+        <button onClick={handleLogoutClick} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 text-[10px] font-bold uppercase tracking-widest group animate-in slide-in-from-right-2 ${confirmLogout ? 'bg-amber-500 text-white border-amber-400 scale-105 shadow-lg shadow-amber-900/20' : 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'}`}>
           {confirmLogout ? <><ExclamationTriangleIcon className="h-3.5 w-3.5" /> ¿Confirmar?</> : <><ArrowRightOnRectangleIcon className="h-3.5 w-3.5" /> Salir</>}
         </button>
       </div>
 
       <div className="max-w-4xl mx-auto mb-4 flex items-center justify-start gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hola, <span className="text-white italic">{activeUser}</span></p>
+        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hola, <span className="text-white italic">{user}</span></p>
       </div>
 
       <div className="max-w-4xl mx-auto">
@@ -457,14 +364,14 @@ if (!isAuth) {
                     <tr key={i} className="hover:bg-white/5 transition-colors">
                       <td className="p-4 font-mono opacity-60 text-[10px]">{row.fecha}</td>
                       <td className="p-4 text-right font-bold text-blue-400">{row.tasa > 0 ? row.tasa.toFixed(2) : "---"}</td>
-                      <td className={`p-4 text-right font-mono ${row.montoBs >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>{row.montoBs.toLocaleString('de-DE', {minimumFractionDigits: 2})}</td>
+                      <td className={`p-4 text-right font-mono ${row.montoBs >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>{row.montoBs.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</td>
                       <td className={`p-4 text-right font-black ${row.montoUsd >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{moneda === 'usd' ? '$' : '€'}{Math.abs(row.montoUsd).toFixed(2)}</td>
                     </tr>
                   ))}
                   <tr className="bg-blue-500/5 border-t-2 border-blue-500/30 font-black">
                     <td className="p-4 italic uppercase text-blue-400 text-[10px]">Saldo Final (Cierre)</td>
                     <td className="p-4 text-right text-blue-500">{resumen.tasaCierre > 0 ? resumen.tasaCierre.toFixed(2) : "---"}</td>
-                    <td className="p-4 text-right text-blue-300">{resumen.saldoFinalBs.toLocaleString('de-DE', {minimumFractionDigits: 2})}</td>
+                    <td className="p-4 text-right text-blue-300">{resumen.saldoFinalBs.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</td>
                     <td className="p-4 text-right text-blue-400 underline underline-offset-4">{moneda === 'usd' ? '$' : '€'}{resumen.saldoRealUsd.toFixed(2)}</td>
                   </tr>
                 </tbody>
@@ -473,22 +380,22 @@ if (!isAuth) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-slate-800/60 p-5 rounded-2xl border border-slate-700 min-h-[120px] flex flex-col justify-between">
-                  <p className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Flujo Teórico ({moneda.toUpperCase()})</p>
-                  <div className="text-2xl font-mono font-bold tracking-tighter text-white">{moneda === 'usd' ? '$' : '€'}{resumen.saldoTeorico.toLocaleString('de-DE', {minimumFractionDigits: 2})}</div>
-                  <div className="flex gap-3 text-[8px] font-bold uppercase border-t border-slate-700 pt-2">
-                      <span className="text-emerald-500 font-black">ENTRA: <span className="text-white">{moneda === 'usd' ? '$' : '€'}{resumen.totalIn.toFixed(2)}</span></span>
-                      <span className="text-red-400 font-black">SALE: <span className="text-white">{moneda === 'usd' ? '$' : '€'}{resumen.totalOut.toFixed(2)}</span></span>
-                  </div>
+                <p className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Flujo Teórico ({moneda.toUpperCase()})</p>
+                <div className="text-2xl font-mono font-bold tracking-tighter text-white">{moneda === 'usd' ? '$' : '€'}{resumen.saldoTeorico.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</div>
+                <div className="flex gap-3 text-[8px] font-bold uppercase border-t border-slate-700 pt-2">
+                  <span className="text-emerald-500 font-black">ENTRA: <span className="text-white">{moneda === 'usd' ? '$' : '€'}{resumen.totalIn.toFixed(2)}</span></span>
+                  <span className="text-red-400 font-black">SALE: <span className="text-white">{moneda === 'usd' ? '$' : '€'}{resumen.totalOut.toFixed(2)}</span></span>
+                </div>
               </div>
               <div className="bg-slate-800/60 p-5 rounded-2xl border border-slate-700 min-h-[120px] flex flex-col justify-between border-b-blue-500 border-b-2">
-                  <p className="text-[9px] font-black uppercase text-blue-400 tracking-wider">Valor Real de Mercado</p>
-                  <div className="text-2xl font-mono font-bold tracking-tighter text-white">{moneda === 'usd' ? '$' : '€'}{resumen.saldoRealUsd.toLocaleString('de-DE', {minimumFractionDigits: 2})}</div>
-                  <div className="text-[8px] font-bold uppercase text-blue-500/60 text-right italic">Tasa cierre: {resumen.tasaCierre.toFixed(2)}</div>
+                <p className="text-[9px] font-black uppercase text-blue-400 tracking-wider">Valor Real de Mercado</p>
+                <div className="text-2xl font-mono font-bold tracking-tighter text-white">{moneda === 'usd' ? '$' : '€'}{resumen.saldoRealUsd.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</div>
+                <div className="text-[8px] font-bold uppercase text-blue-500/60 text-right italic">Tasa cierre: {resumen.tasaCierre.toFixed(2)}</div>
               </div>
               <div className={`p-5 rounded-2xl border min-h-[120px] flex flex-col justify-between shadow-xl ${resumen.diferencial >= 0 ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-red-500/10 border-red-500/50'}`}>
-                  <p className={`text-[9px] font-black uppercase tracking-wider ${resumen.diferencial >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>Diferencial Cambiario</p>
-                  <div className={`text-2xl font-black tracking-tighter ${resumen.diferencial >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{resumen.diferencial >= 0 ? '+' : ''}{moneda === 'usd' ? '$' : '€'}{resumen.diferencial.toLocaleString('de-DE', {minimumFractionDigits: 2})}</div>
-                  <div className={`text-[9px] font-bold text-right italic ${resumen.diferencial >= 0 ? 'text-emerald-500/70' : 'text-red-400/70'}`}>VAR: {resumen.porcentaje.toFixed(2)}%</div>
+                <p className={`text-[9px] font-black uppercase tracking-wider ${resumen.diferencial >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>Diferencial Cambiario</p>
+                <div className={`text-2xl font-black tracking-tighter ${resumen.diferencial >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{resumen.diferencial >= 0 ? '+' : ''}{moneda === 'usd' ? '$' : '€'}{resumen.diferencial.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</div>
+                <div className={`text-[9px] font-bold text-right italic ${resumen.diferencial >= 0 ? 'text-emerald-500/70' : 'text-red-400/70'}`}>VAR: {resumen.porcentaje.toFixed(2)}%</div>
               </div>
             </div>
 

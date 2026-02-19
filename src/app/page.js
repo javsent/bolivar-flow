@@ -13,14 +13,11 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import HistoryChart from '@/components/HistoryChart';
-import whitelist from '@/data/whitelist.json';
+import { useAuth } from '@/context/AuthContext';
+import { formatCurrency } from '@/lib/utils';
 
 export default function CurrencyApp() {
-  // --- ESTADOS DE ACCESO ---
-  const [isAuth, setIsAuth] = useState(false);
-  const [userInput, setUserInput] = useState('');
-  const [authError, setAuthError] = useState(false);
-  const [activeUser, setActiveUser] = useState('');
+  const { user, logout } = useAuth();
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   // --- ESTADOS UX (Toast) ---
@@ -54,14 +51,8 @@ export default function CurrencyApp() {
   const yearsRange = Array.from({ length: currentYear - 2020 + 1 }, (_, i) => 2020 + i).reverse();
   const monthNames = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
 
-  // --- LÓGICA DE PERSISTENCIA Y CARGA INICIAL ---
+  // --- LÓGICA DE CARGA INICIAL ---
   useEffect(() => {
-    const savedUser = localStorage.getItem('rybak_user');
-    if (savedUser && whitelist.authorized.includes(savedUser)) {
-      setIsAuth(true);
-      setActiveUser(savedUser);
-    }
-
     resetToToday();
   }, []);
 
@@ -78,30 +69,12 @@ export default function CurrencyApp() {
     setTimeout(() => setToastMessage(null), 2000);
   };
 
-  // --- MANEJO DE ACCESO ---
-  const handleLogin = (e) => {
-    e.preventDefault();
-    const cleanUser = userInput.trim();
-    if (whitelist.authorized.includes(cleanUser)) {
-      localStorage.setItem('rybak_user', cleanUser);
-      setIsAuth(true);
-      setActiveUser(cleanUser);
-      setAuthError(false);
-    } else {
-      setAuthError(true);
-      setTimeout(() => setAuthError(false), 2000);
-    }
-  };
-
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
     if (!confirmLogout) {
       setConfirmLogout(true);
       setTimeout(() => setConfirmLogout(false), 3000);
     } else {
-      localStorage.removeItem('rybak_user');
-      setIsAuth(false);
-      setActiveUser('');
-      setUserInput('');
+      logout();
       setConfirmLogout(false);
     }
   };
@@ -273,19 +246,17 @@ export default function CurrencyApp() {
   const handleAmountChange = (e) => {
     const val = e.target.value.replace(/\D/g, ''); // Solo números
     const num = parseInt(val || '0', 10);
-    const formatted = (num / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatted = formatCurrency(num / 100);
     setAmount(formatted);
   };
 
   const handlePaste = (e) => {
     e.preventDefault();
     let text = e.clipboardData.getData('text');
-    // Normalizar formato venezolano: quitar puntos de miles y cambiar coma por punto
-    // Pero para nuestra lógica de "solo números", simplemente quitamos todo lo que no sea dígito
     const cleanText = text.replace(/\D/g, '');
     if (cleanText) {
       const num = parseInt(cleanText, 10);
-      const formatted = (num / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const formatted = formatCurrency(num / 100);
       setAmount(formatted);
     }
   };
@@ -296,10 +267,7 @@ export default function CurrencyApp() {
     setIsForeignToVes(nextIsForeignToVes);
 
     // Intercambiar valores
-    const newAmount = new Intl.NumberFormat('de-DE', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(converted);
+    const newAmount = formatCurrency(converted);
     setAmount(newAmount);
   };
 
@@ -312,7 +280,7 @@ export default function CurrencyApp() {
 
   // --- UTILS DE COPIADO ---
   const handleCopySingleResult = () => {
-    const val = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2 }).format(converted);
+    const val = formatCurrency(converted);
     navigator.clipboard.writeText(val)
       .then(() => showToast(`Monto copiado: ${val}`))
       .catch(err => console.error(err));
@@ -320,7 +288,7 @@ export default function CurrencyApp() {
 
   const handleCopyRate = () => {
     const rateVal = rates[activeRate] || 0;
-    const val = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2 }).format(rateVal);
+    const val = formatCurrency(rateVal);
     navigator.clipboard.writeText(val)
       .then(() => showToast(`Tasa copiada: ${val}`))
       .catch(err => console.error(err));
@@ -531,62 +499,12 @@ export default function CurrencyApp() {
     navigator.clipboard.writeText(fullText).then(() => showToast("¡Tabla copiada al portapapeles!"));
   };
 
-  if (!isAuth) {
+  // --- CUADRO DE CARGA ---
+  if (loading && rates.bcv === 0) {
     return (
-      <div className="fixed inset-0 z-[100] bg-[#0f172a] flex items-center justify-center p-4 font-sans">
-        <div className="w-full max-w-sm bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-2xl text-center animate-in zoom-in duration-300">
-          <div className="mb-6">
-            <BoltIcon className="h-12 w-12 text-blue-500 mx-auto mb-2 animate-pulse" />
-            <h1 className="text-2xl font-black uppercase tracking-tighter text-emerald-400">
-              BOLÍVAR <span className="text-blue-500">FLOW</span>
-            </h1>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Calculadora Monetaria</p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="text"
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              placeholder="@usuario"
-              className={`w-full bg-slate-900 border ${authError ? 'border-red-500 animate-pulse' : 'border-slate-700'} rounded-xl p-4 text-center text-white outline-none focus:border-emerald-500 transition-all font-mono`}
-            />
-
-            <div className="flex flex-col gap-3">
-              <button
-                type="submit"
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase py-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-900/20"
-              >
-                Acceder al Sistema
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setUserInput('@invitado');
-                  setTimeout(() => {
-                    if (whitelist.authorized.includes('@invitado')) {
-                      localStorage.setItem('rybak_user', '@invitado');
-                      setIsAuth(true);
-                      setActiveUser('@invitado');
-                    }
-                  }, 10);
-                }}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold uppercase py-3 rounded-xl transition-all active:scale-95 border border-slate-700 text-[11px] tracking-widest"
-              >
-                Entrar como Invitado
-              </button>
-              <p className="text-[8px] text-slate-300 items-center align-middle uppercase tracking-widest pt-0"> Contacto: rybak.software@gmail.com</p>
-              <p className="text-[6px] text-slate-500 items-center align-middle uppercase tracking-widest pt-0"> Rybak.Software © 2026 - Todos los derechos reservados</p>
-            </div>
-          </form>
-
-          {authError && (
-            <p className="text-red-400 text-[9px] font-bold uppercase mt-4 tracking-wider animate-in fade-in">
-              Acceso denegado: Usuario no autorizado
-            </p>
-          )}
-        </div>
+      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center p-4">
+        <BoltIcon className="h-12 w-12 text-emerald-500 animate-pulse mb-4" />
+        <p className="text-emerald-500 font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Sincronizando Mercado...</p>
       </div>
     );
   }
@@ -659,21 +577,15 @@ export default function CurrencyApp() {
         </div>
       )}
 
-      <div className="w-full max-w-md flex justify-end mb-2 px-1">
-        <button
-          onClick={handleLogout}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 text-[10px] font-bold uppercase tracking-widest group animate-in slide-in-from-right-2
-            ${confirmLogout
-              ? 'bg-amber-500 text-white border-amber-400 scale-105 shadow-lg'
-              : 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'
-            }`}
-        >
-          {confirmLogout ? (
-            <><ExclamationTriangleIcon className="h-3.5 w-3.5" /> ¿Confirmar?</>
-          ) : (
-            <><ArrowRightOnRectangleIcon className="h-3.5 w-3.5" /> Salir</>
-          )}
+      <div className="max-w-4xl mx-auto flex justify-end mb-4">
+        <button onClick={handleLogoutClick} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 text-[10px] font-bold uppercase tracking-widest group animate-in slide-in-from-right-2 ${confirmLogout ? 'bg-amber-500 text-white border-amber-400 scale-105 shadow-lg shadow-amber-900/20' : 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'}`}>
+          {confirmLogout ? <><ExclamationTriangleIcon className="h-4 w-4" /> ¿Confirmar?</> : <><ArrowRightOnRectangleIcon className="h-4 w-4" /> Salir</>}
         </button>
+      </div>
+
+      <div className="max-w-4xl mx-auto mb-4 flex items-center justify-start gap-2">
+        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hola, <span className="text-white italic">{user}</span></p>
       </div>
 
       <div className="w-full max-w-md bg-[#1e293b] p-1 rounded-xl mb-4 flex border border-[#334155] shadow-md relative z-20">
@@ -687,12 +599,6 @@ export default function CurrencyApp() {
 
       <div className="w-full max-w-md bg-[#1e293b] p-6 rounded-2xl min-h-[520px] relative z-10 flex flex-col shadow-xl border border-[#334155]">
 
-        <div className="mb-4 flex items-center justify-start gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            Hola, <span className="text-white italic">{activeUser}</span>
-          </p>
-        </div>
 
         {view === 'calculator' ? (
           <div className="animate-in fade-in duration-300 flex-1 flex flex-col">
@@ -794,7 +700,7 @@ export default function CurrencyApp() {
               <div className="flex flex-col gap-3">
                 <div className="w-full bg-[#334155]/20 text-3xl font-mono text-emerald-400 p-4 rounded-xl border border-[#334155]/30 flex justify-between items-center h-[80px]">
                   <span className="truncate pr-2">
-                    {new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(converted)}
+                    {formatCurrency(converted)}
                   </span>
                   <div className="flex items-center gap-3">
                     <button
