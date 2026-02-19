@@ -29,7 +29,7 @@ export default function CurrencyApp() {
   // --- ESTADOS CALCULADORA/HISTORIAL ---
   const chartRef = useRef(null);
   const dateInputRef = useRef(null);
-  const shareRef = useRef(null); 
+  const shareRef = useRef(null);
 
   const [view, setView] = useState('calculator');
   const [amount, setAmount] = useState('');
@@ -123,8 +123,8 @@ export default function CurrencyApp() {
       let fechaBusqueda = new Date(today);
 
       for (let i = 0; i < 7; i++) {
-        const fechaStr = fechaBusqueda.toLocaleDateString('es-ES', { 
-          day: '2-digit', month: '2-digit', year: 'numeric' 
+        const fechaStr = fechaBusqueda.toLocaleDateString('es-ES', {
+          day: '2-digit', month: '2-digit', year: 'numeric'
         });
         const coincidencia = historico.find(d => d.fecha === fechaStr);
         if (coincidencia) {
@@ -145,7 +145,7 @@ export default function CurrencyApp() {
         setRates(data);
         setDisplayDate(today.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }));
       }
-      
+
       setIsHistoricalRate(false);
     } catch (e) {
       console.error("Error cargando tasas:", e);
@@ -165,17 +165,34 @@ export default function CurrencyApp() {
     setSelectedDate(newDate);
     setLoading(true);
     try {
-      const dateObj = new Date(newDate + "T12:00:00");
-      const res = await fetch(`/api/historico?mes=${dateObj.getMonth() + 1}&anio=${dateObj.getFullYear()}`);
-      const json = await res.json();
-      const dayStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      const dayData = json.data?.find(d => d.fecha === dayStr);
-      if (dayData) {
+      let dateObj = new Date(newDate + "T12:00:00");
+      let found = false;
+      let dayData = null;
+
+      // Intentar buscar hasta 7 días hacia atrás (para cubrir fines de semana y feriados largos)
+      for (let i = 0; i < 7; i++) {
+        const res = await fetch(`/api/historico?mes=${dateObj.getMonth() + 1}&anio=${dateObj.getFullYear()}`);
+        const json = await res.json();
+        const dayStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        dayData = json.data?.find(d => d.fecha === dayStr);
+
+        if (dayData) {
+          found = true;
+          break;
+        }
+        // Si no se halla, retroceder un día
+        dateObj.setDate(dateObj.getDate() - 1);
+      }
+
+      if (found && dayData) {
         setRates(prev => ({ ...prev, bcv: dayData.usd, euro: dayData.euro }));
         setIsHistoricalRate(true);
-        setDisplayDate(dayData.fecha);
+        setDisplayDate(dayData.fecha); // Mostramos la fecha real de la tasa
+        if (dayData.fecha !== new Date(newDate + "T12:00:00").toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })) {
+          showToast(`Usando tasa del día ${dayData.fecha}`);
+        }
       } else {
-        showToast("No se halló registro para esa fecha");
+        showToast("No se halló registro reciente");
         fetchCurrentRates();
       }
     } catch (e) {
@@ -204,7 +221,7 @@ export default function CurrencyApp() {
         const [d, m, y] = str.split('/').map(Number);
         return new Date(y, m - 1, d);
       };
-      
+
       const lastEntryDate = rawData.reduce((max, entry) => {
         const d = parseFecha(entry.fecha);
         return d > max ? d : max;
@@ -218,8 +235,8 @@ export default function CurrencyApp() {
 
       for (let day = 1; day <= stopDay; day++) {
         const currentSearchDate = new Date(histYear, histMonth - 1, day);
-        const dayStr = currentSearchDate.toLocaleDateString('es-ES', { 
-          day: '2-digit', month: '2-digit', year: 'numeric' 
+        const dayStr = currentSearchDate.toLocaleDateString('es-ES', {
+          day: '2-digit', month: '2-digit', year: 'numeric'
         });
 
         const entry = rawData.find(d => d.fecha === dayStr);
@@ -233,7 +250,7 @@ export default function CurrencyApp() {
             fecha: dayStr,
             usd: lastValidUsd,
             euro: lastValidEuro,
-            isWeekend: true 
+            isWeekend: true
           });
         }
       }
@@ -246,17 +263,30 @@ export default function CurrencyApp() {
     }
   };
 
-  // --- VALIDACIÓN DE INPUT Y CÁLCULO ---
+  // --- LÓGICA DE INPUT FINANCIERO (PUNTO FIJO) ---
   const handleAmountChange = (e) => {
-    const val = e.target.value;
-    if (val === '' || /^[0-9]*\,?[0-9]*$/.test(val)) {
-      setAmount(val);
+    const val = e.target.value.replace(/\D/g, ''); // Solo números
+    const num = parseInt(val || '0', 10);
+    const formatted = (num / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    setAmount(formatted);
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    let text = e.clipboardData.getData('text');
+    // Normalizar formato venezolano: quitar puntos de miles y cambiar coma por punto
+    // Pero para nuestra lógica de "solo números", simplemente quitamos todo lo que no sea dígito
+    const cleanText = text.replace(/\D/g, '');
+    if (cleanText) {
+      const num = parseInt(cleanText, 10);
+      const formatted = (num / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      setAmount(formatted);
     }
   };
 
   useEffect(() => {
     const rateVal = rates[activeRate] || 0;
-    const cleanAmountStr = amount.replace(',', '.');
+    const cleanAmountStr = amount.replace(/\./g, '').replace(',', '.');
     const num = parseFloat(cleanAmountStr) || 0;
     setConverted(isForeignToVes ? num * rateVal : (rateVal > 0 ? num / rateVal : 0));
   }, [amount, activeRate, isForeignToVes, rates]);
@@ -352,7 +382,7 @@ export default function CurrencyApp() {
       doc.text("REPORTE ANALÍTICO DE TASAS OFICIALES BCV", 15, 30, { charSpace: 0 });
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
-      
+
       // CAMBIO: Mostrar nombre del mes en lugar del número
       const currentMonthName = monthNames[histMonth - 1] || histMonth;
       doc.text(`MES: ${currentMonthName} / AÑO: ${histYear}`, pageWidth - 15, 22, { align: 'right', charSpace: 0 });
@@ -434,14 +464,14 @@ export default function CurrencyApp() {
       doc.setLineWidth(0.5);
       for (let i = 0; i < cronoData.length - 1; i++) {
         const p1 = getP(cronoData[i].usd, i);
-        const p2 = getP(cronoData[i+1].usd, i + 1);
+        const p2 = getP(cronoData[i + 1].usd, i + 1);
         doc.line(p1.x, p1.y, p2.x, p2.y);
       }
 
       doc.setDrawColor(59, 130, 246);
       for (let i = 0; i < cronoData.length - 1; i++) {
         const p1 = getP(cronoData[i].euro, i);
-        const p2 = getP(cronoData[i+1].euro, i + 1);
+        const p2 = getP(cronoData[i + 1].euro, i + 1);
         doc.line(p1.x, p1.y, p2.x, p2.y);
       }
 
@@ -452,8 +482,8 @@ export default function CurrencyApp() {
         startY: 162,
         theme: 'grid',
         headStyles: { fillColor: [15, 23, 42], halign: 'center' },
-        columnStyles: { 
-          0: { halign: 'center' }, 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'center' } 
+        columnStyles: {
+          0: { halign: 'center' }, 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'center' }
         },
         didDrawPage: (data) => {
           doc.setFontSize(8);
@@ -469,7 +499,7 @@ export default function CurrencyApp() {
 
       doc.save(`REPORTE_BCV_${currentMonthName}_${histYear}.pdf`);
       showToast("Reporte PDF generado");
-    } catch (e) { 
+    } catch (e) {
       console.error(e);
       showToast("Error en PDF");
     }
@@ -482,7 +512,7 @@ export default function CurrencyApp() {
     navigator.clipboard.writeText(fullText).then(() => showToast("¡Tabla copiada al portapapeles!"));
   };
 
-if (!isAuth) {
+  if (!isAuth) {
     return (
       <div className="fixed inset-0 z-[100] bg-[#0f172a] flex items-center justify-center p-4 font-sans">
         <div className="w-full max-w-sm bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-2xl text-center animate-in zoom-in duration-300">
@@ -502,7 +532,7 @@ if (!isAuth) {
               placeholder="@usuario"
               className={`w-full bg-slate-900 border ${authError ? 'border-red-500 animate-pulse' : 'border-slate-700'} rounded-xl p-4 text-center text-white outline-none focus:border-emerald-500 transition-all font-mono`}
             />
-            
+
             <div className="flex flex-col gap-3">
               <button
                 type="submit"
@@ -517,9 +547,10 @@ if (!isAuth) {
                   setUserInput('@invitado');
                   setTimeout(() => {
                     if (whitelist.authorized.includes('@invitado')) {
-                        localStorage.setItem('rybak_user', '@invitado');
-                        setIsAuth(true);
-                        setActiveUser('@invitado');}
+                      localStorage.setItem('rybak_user', '@invitado');
+                      setIsAuth(true);
+                      setActiveUser('@invitado');
+                    }
                   }, 10);
                 }}
                 className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold uppercase py-3 rounded-xl transition-all active:scale-95 border border-slate-700 text-[11px] tracking-widest"
@@ -561,7 +592,7 @@ if (!isAuth) {
 
             <div className="flex justify-center items-baseline gap-3 mb-2">
               <span className="text-white text-7xl font-bold font-mono tracking-tight leading-none">
-                {new Intl.NumberFormat('de-DE', {minimumFractionDigits: 2 }).format(rates[activeRate] || 0)}
+                {new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2 }).format(rates[activeRate] || 0)}
               </span>
               <span className="text-3xl font-bold text-emerald-500">Bs</span>
             </div>
@@ -585,7 +616,7 @@ if (!isAuth) {
               <span className="text-emerald-400 font-bold text-2xl uppercase tracking-widest mb-4">Equivale a:</span>
               <div className="flex justify-end items-baseline gap-3">
                 <span className="text-white font-mono text-6xl font-black tracking-tight leading-none">
-                  {new Intl.NumberFormat('de-DE', {minimumFractionDigits: 2}).format(converted)}
+                  {new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2 }).format(converted)}
                 </span>
                 <span className="text-emerald-500 text-4xl font-bold uppercase">
                   {isForeignToVes ? 'Bs' : (activeRate === 'euro' ? 'EUR' : 'USD')}
@@ -726,6 +757,7 @@ if (!isAuth) {
                   inputMode="decimal"
                   value={amount}
                   onChange={handleAmountChange}
+                  onPaste={handlePaste}
                   placeholder="0,00"
                   className="flex-1 bg-transparent text-3xl font-mono text-white outline-none min-w-0"
                 />
@@ -793,8 +825,8 @@ if (!isAuth) {
                   <table className="w-full text-sm text-left border-collapse">
                     <thead className="text-[10px] text-slate-500 uppercase bg-[#1e293b] sticky top-0 z-20"><tr><th className="px-3 py-3">Fecha</th><th className="px-3 py-3 text-right">USD</th><th className="px-3 py-3 text-right">EUR</th></tr></thead>
                     <tbody className="divide-y divide-slate-800">{histData.map((row, idx) => (
-                        <tr key={idx} className={`hover:bg-slate-800/50 ${row.isWeekend ? 'opacity-50 italic text-slate-500' : ''}`}><td className="px-3 py-2 font-mono text-[11px]">{row.fecha}</td><td className={`px-3 py-2 font-mono text-right font-bold ${row.isWeekend ? '' : 'text-emerald-500'}`}>{row.usd.toFixed(2)}</td><td className={`px-3 py-2 font-mono text-right font-bold ${row.isWeekend ? '' : 'text-blue-500'}`}>{row.euro.toFixed(2)}</td></tr>
-                      ))}</tbody>
+                      <tr key={idx} className={`hover:bg-slate-800/50 ${row.isWeekend ? 'opacity-50 italic text-slate-500' : ''}`}><td className="px-3 py-2 font-mono text-[11px]">{row.fecha}</td><td className={`px-3 py-2 font-mono text-right font-bold ${row.isWeekend ? '' : 'text-emerald-500'}`}>{row.usd.toFixed(2)}</td><td className={`px-3 py-2 font-mono text-right font-bold ${row.isWeekend ? '' : 'text-blue-500'}`}>{row.euro.toFixed(2)}</td></tr>
+                    ))}</tbody>
                   </table>
                 </div>
                 <div className="grid grid-cols-3 gap-2">

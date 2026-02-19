@@ -9,10 +9,7 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  /* IMPORTANTE: Fondo transparente para que funcione el borde redondeado */
-  background: transparent !important;
-  /* Evita que aparezcan barras de scroll dobles o blancas */
-  overflow: hidden;
+  background: #0f172a !important;
   /* Hace que la app se sienta nativa (no se puede seleccionar texto general) */
   -webkit-user-select: none;
   user-select: none;
