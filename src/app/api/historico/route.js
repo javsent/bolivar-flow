@@ -3,8 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import * as XLSX from 'xlsx';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+const URL_BASE = 'https://www.bcv.org.ve/estadisticas/tipo-cambio-de-referencia-smc';
+const DOMAIN = 'https://www.bcv.org.ve';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -18,64 +22,133 @@ export async function GET(request) {
     yearData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
   }
 
-  const requestedMonthData = yearData[mes] || [];
+  let requestedMonthData = yearData[mes] || [];
   const now = new Date();
 
   // SOLO INTENTAR SINCRONIZAR SI ES EL MES/AÑO ACTUAL
   if (anio === now.getFullYear() && mes === (now.getMonth() + 1)) {
     try {
-      const { data: html } = await axios.get('https://www.bcv.org.ve/', { 
+      const { data: html } = await axios.get(URL_BASE, {
         headers: { 'User-Agent': 'Mozilla/5.0' },
-        timeout: 4000 
+        timeout: 8000
       });
       const $ = cheerio.load(html);
 
-      // 1. EXTRAER LA "FECHA VALOR" DE LA HOME (Equivalente a D5)
-      // El BCV la pone en un span con la clase .date-display-single
-      const rawWebDate = $('.date-display-single').first().text().trim(); 
-      // Ejemplo: "Jueves, 12 Febrero 2026"
+      let links = [];
+      $('a[href*="_smc.xls"]').each((i, el) => {
+        const href = $(el).attr('href');
+        const fullLink = href.startsWith('http') ? href : DOMAIN + href;
+        if (!links.includes(fullLink)) links.push(fullLink);
+      });
 
-      // 2. PARSEAR FECHA (Convertir "Febrero" a "02", etc.)
-      const dateMatch = rawWebDate.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
-      
-      if (dateMatch) {
-        const day = dateMatch[1].padStart(2, '0');
-        const monthName = dateMatch[2].toLowerCase();
-        const year = dateMatch[3];
+      // Procesamos los primeros 5 enlaces para no sobrecargar
+      links = links.slice(0, 5);
 
-        const meses = {
-          enero: '01', febrero: '02', marzo: '03', abril: '04', mayo: '05', junio: '06',
-          julio: '07', agosto: '08', septiembre: '09', octubre: '10', noviembre: '11', diciembre: '12'
-        };
+      let datesFound = [];
 
-        const month = meses[monthName];
-        const fechaValorOficial = `${day}/${month}/${year}`; // DD/MM/YYYY
+      for (const link of links) {
+        try {
+          const response = await axios.get(link, { responseType: 'arraybuffer', timeout: 8000 });
+          const workbook = XLSX.read(response.data, { type: 'buffer' });
 
-        // 3. EXTRAER TASAS (Verificado: Dólar es USD, Euro es EUR)
-        const usdHome = parseFloat($('#dolar strong').text().replace(',', '.'));
-        const eurHome = parseFloat($('#euro strong').text().replace(',', '.'));
+          workbook.SheetNames.forEach(name => {
+            const sheet = workbook.Sheets[name];
+            const d5Content = sheet['D5']?.v;
 
-        // 4. VERIFICAR SI YA EXISTE ESTA FECHA VALOR
-        const alreadyExists = requestedMonthData.some(d => d.fecha === fechaValorOficial);
+            if (typeof d5Content === 'string' && d5Content.includes('Fecha Valor:')) {
+              const match = d5Content.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+              if (match) {
+                const [_, day, monthStr, yearStr] = match;
+                const eurVal = sheet['G11']?.v;
+                const usdVal = sheet['G15']?.v;
 
-        if (!alreadyExists && !isNaN(usdHome) && !isNaN(eurHome)) {
-          const newEntry = {
-            fecha: fechaValorOficial, // USAMOS LA FECHA DE LA WEB, NO LA DEL SISTEMA
-            usd: usdHome,
-            euro: eurHome,
-            isWeekend: false
-          };
-
-          // Inyectar al inicio, guardar y actualizar la variable de respuesta
-          requestedMonthData.unshift(newEntry);
-          yearData[mes] = requestedMonthData;
-          fs.writeFileSync(dataPath, JSON.stringify(yearData, null, 2));
-          
-          console.log(`🚀 Inyección exitosa: ${fechaValorOficial} - USD: ${usdHome}`);
+                if (eurVal && usdVal && parseInt(yearStr) === anio && parseInt(monthStr) === mes) {
+                  const fechaOficial = `${day}/${monthStr}/${yearStr}`;
+                  datesFound.push({
+                    fecha: fechaOficial,
+                    usd: parseFloat(usdVal),
+                    euro: parseFloat(eurVal),
+                    isWeekend: false
+                  });
+                }
+              }
+            }
+          });
+        } catch (e) {
+          console.warn(`Error leyendo XLS: ${link}`);
         }
       }
+
+      // Inyectar fechas faltantes
+      let changed = false;
+      for (const entry of datesFound) {
+        const alreadyExists = requestedMonthData.some(d => d.fecha === entry.fecha);
+        if (!alreadyExists) {
+          requestedMonthData.push(entry);
+          changed = true;
+          console.log(`🚀 Inyección exitosa desde XLS: ${entry.fecha} - USD: ${entry.usd}`);
+        }
+      }
+
+      if (changed) {
+        // Ordenamos requestedMonthData (ascendente) para el rellenado (fill-forward)
+        requestedMonthData.sort((a, b) => {
+          const [da, ma, ya] = a.fecha.split('/');
+          const [db, mb, yb] = b.fecha.split('/');
+          return new Date(`${ya}-${ma}-${da}`) - new Date(`${yb}-${mb}-${db}`);
+        });
+
+        const filledData = [];
+        let lastKnown = null;
+
+        if (requestedMonthData.length > 0) {
+          const firstStr = requestedMonthData[0].fecha;
+          const [d0, m0, y0] = firstStr.split('/');
+          let current = new Date(`${y0}-${m0}-${d0}T12:00:00`);
+
+          const nowMidnight = new Date();
+          nowMidnight.setHours(12, 0, 0, 0);
+
+          const existingMap = {};
+          requestedMonthData.forEach(d => existingMap[d.fecha] = d);
+
+          // Iterar desde el primer día registrado hasta hoy (o el fin del mes solicitado)
+          while (current <= nowMidnight && (current.getMonth() + 1) === mes) {
+            const dayStr = current.getDate().toString().padStart(2, '0');
+            const monthStr = (current.getMonth() + 1).toString().padStart(2, '0');
+            const yearStr = current.getFullYear();
+            const display = `${dayStr}/${monthStr}/${yearStr}`;
+
+            if (existingMap[display]) {
+              lastKnown = existingMap[display];
+              filledData.push(lastKnown);
+            } else if (lastKnown) {
+              filledData.push({
+                fecha: display,
+                usd: lastKnown.usd,
+                euro: lastKnown.euro,
+                isWeekend: true
+              });
+            }
+
+            current.setDate(current.getDate() + 1);
+          }
+        }
+
+        // Ordenar descendente (más reciente primero) como lo espera la aplicación
+        filledData.sort((a, b) => {
+          const [da, ma, ya] = a.fecha.split('/');
+          const [db, mb, yb] = b.fecha.split('/');
+          return new Date(`${yb}-${mb}-${db}`) - new Date(`${ya}-${ma}-${da}`);
+        });
+
+        yearData[mes] = filledData;
+        requestedMonthData = filledData;
+        fs.writeFileSync(dataPath, JSON.stringify(yearData, null, 2));
+      }
+
     } catch (e) {
-      console.warn("⚠️ Sincronización on-demand fallida. Usando caché local.");
+      console.warn("⚠️ Sincronización on-demand fallida. Usando caché local.", e.message);
     }
   }
 
