@@ -143,11 +143,14 @@ export default function CurrencyApp() {
       let dayData = null;
 
       // Intentar buscar hasta 7 días hacia atrás (para cubrir fines de semana y feriados largos)
+      // Usamos sync=false para evitar que el servidor haga scraping inútil por cada intento de fecha vieja
+      const res = await fetch(`/api/historico?mes=${dateObj.getMonth() + 1}&anio=${dateObj.getFullYear()}&sync=false`);
+      const json = await res.json();
+      const historico = json.data || [];
+
       for (let i = 0; i < 7; i++) {
-        const res = await fetch(`/api/historico?mes=${dateObj.getMonth() + 1}&anio=${dateObj.getFullYear()}`);
-        const json = await res.json();
         const dayStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        dayData = json.data?.find(d => d.fecha === dayStr);
+        dayData = historico.find(d => d.fecha === dayStr);
 
         if (dayData) {
           found = true;
