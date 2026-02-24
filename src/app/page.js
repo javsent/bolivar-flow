@@ -59,7 +59,11 @@ export default function CurrencyApp() {
   // --- FUNCIÓN PARA RESETEAR A HOY (LIVE) ---
   const resetToToday = () => {
     const now = new Date();
-    setSelectedDate(now.toISOString().split('T')[0]);
+    // Obtener componentes locales para evitar el salto de fecha UTC (+8pm VET)
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    setSelectedDate(`${year}-${month}-${day}`);
     fetchCurrentRates();
   };
 
@@ -660,7 +664,7 @@ export default function CurrencyApp() {
                     type="date"
                     value={selectedDate}
                     onChange={handleDateChange}
-                    max={new Date().toISOString().split('T')[0]}
+                    max={new Date().toLocaleDateString('en-CA')} // Formato YYYY-MM-DD local
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                     style={{ fontSize: '16px' }}
                   />

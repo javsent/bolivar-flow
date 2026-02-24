@@ -172,13 +172,24 @@ export async function GET(request) {
         const [d0, m0, y0] = firstStr.split('/');
         let current = new Date(`${y0}-${m0}-${d0}T12:00:00`);
 
-        const nowMidnight = new Date();
-        nowMidnight.setHours(12, 0, 0, 0);
+        // Obtener la fecha de "hoy" en Venezuela para el stop cronológico
+        // No usamos el servidor (UTC) directamente para evitar hoy ser mañana a las 8pm
+        const nowVET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Caracas" }));
+        const nowMidnight = new Date(nowVET.getFullYear(), nowVET.getMonth(), nowVET.getDate(), 12, 0, 0, 0);
 
         const existingMap = {};
         requestedMonthData.forEach(d => existingMap[d.fecha] = d);
 
-        while (current <= nowMidnight && (current.getMonth() + 1) === mes) {
+        // El stop debe ser hoy o la fecha más reciente oficial (si BCV adelantó la tasa)
+        let lastEntryDate = requestedMonthData.reduce((max, entry) => {
+          const [d, m, y] = entry.fecha.split('/').map(Number);
+          const dt = new Date(y, m - 1, d, 12, 0, 0, 0);
+          return dt > max ? dt : max;
+        }, new Date(0));
+
+        const stopDate = lastEntryDate > nowMidnight ? lastEntryDate : nowMidnight;
+
+        while (current <= stopDate && (current.getMonth() + 1) === mes) {
           const dayStr = current.getDate().toString().padStart(2, '0');
           const monthStr = (current.getMonth() + 1).toString().padStart(2, '0');
           const yearStr = current.getFullYear();
