@@ -93,8 +93,14 @@ export default function CurrencyApp() {
 
       const today = new Date();
       const resHisto = await fetch(`/api/historico?mes=${today.getMonth() + 1}&anio=${today.getFullYear()}`);
-      const jsonHisto = await resHisto.json();
-      const historico = jsonHisto.data || [];
+
+      let historico = [];
+      if (resHisto.ok) {
+        const jsonHisto = await resHisto.json();
+        historico = jsonHisto.data || [];
+      } else {
+        console.warn("⚠️ No se pudo cargar el historial completo para hoy.");
+      }
 
       let tasaVigente = null;
       let fechaBusqueda = new Date(today);
@@ -149,8 +155,14 @@ export default function CurrencyApp() {
       // Intentar buscar hasta 7 días hacia atrás (para cubrir fines de semana y feriados largos)
       // Usamos sync=false para evitar que el servidor haga scraping inútil por cada intento de fecha vieja
       const res = await fetch(`/api/historico?mes=${dateObj.getMonth() + 1}&anio=${dateObj.getFullYear()}&sync=false`);
-      const json = await res.json();
-      const historico = json.data || [];
+
+      let historico = [];
+      if (res.ok) {
+        const json = await res.json();
+        historico = json.data || [];
+      } else {
+        throw new Error("Error en servidor al buscar fecha");
+      }
 
       for (let i = 0; i < 7; i++) {
         const dayStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
