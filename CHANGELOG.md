@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Global `try-catch` blocks in all API routes for robust error reporting.
 
 ### Fixed
+- Error de sintaxis (llave extra) en `/api/historico` que causaba fallo de compilación.
 - Resolved 500 error in `/api/historico` and `/api/tasas` by making filesystem writes optional (Vercel compatibility).
 - Improved "Fecha Valor" regex to handle variations like "25 de febrero".
 - Fixed frontend crash when API returns non-JSON responses.
