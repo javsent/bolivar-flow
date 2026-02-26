@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - Global `try-catch` blocks in all API routes for robust error reporting.
 
 ### Fixed
+- Error de reversión en historial: las tasas oficiales ahora sobrescriben correctamente los marcadores de "Día Cerrado".
+- Regla 00:00 AM: Los marcadores de "Día Cerrado" solo se generan para días pasados, permitiendo al BCV publicar tasas durante todo el día actual sin bloqueos.
 - Error de sintaxis (llave extra) en `/api/historico` que causaba fallo de compilación.
 - Resolved 500 error in `/api/historico` and `/api/tasas` by making filesystem writes optional (Vercel compatibility).
 - Improved "Fecha Valor" regex to handle variations like "25 de febrero".

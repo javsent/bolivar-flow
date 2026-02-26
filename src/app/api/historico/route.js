@@ -155,10 +155,15 @@ export async function GET(request) {
 
       // --- PROCESAR INYECCIÓN Y FILL-FORWARD ---
       for (const entry of datesFound) {
-        const alreadyExists = requestedMonthData.some(d => d.fecha === entry.fecha);
-        if (!alreadyExists) {
+        const index = requestedMonthData.findIndex(d => d.fecha === entry.fecha);
+        if (index === -1) {
           requestedMonthData.push(entry);
           changed = true;
+        } else if (requestedMonthData[index].isWeekend === true) {
+          // SOBREESCRIBIR SI ES UN PLACEHOLDER DE FIN DE SEMANA/CERRADO
+          requestedMonthData[index] = entry;
+          changed = true;
+          console.log(`♻️ Refreshed Placeholder with Official Rate: ${entry.fecha}`);
         }
       }
 
@@ -186,12 +191,18 @@ export async function GET(request) {
 
           // El stop debe ser hoy o la fecha más reciente oficial (si BCV adelantó la tasa)
           let lastOfficialDate = requestedMonthData.reduce((max, entry) => {
+            if (entry.isWeekend) return max;
             const [d, m, y] = entry.fecha.split('/').map(Number);
             const dt = new Date(y, m - 1, d, 12, 0, 0, 0);
             return dt > max ? dt : max;
           }, new Date(0));
 
-          const stopDate = lastOfficialDate > nowMidnight ? lastOfficialDate : nowMidnight;
+          // REGLA 00:00 AM: Solo rellenar hasta ayer (o hoy si ya es mañana VET)
+          // Esto evita marcar como "cerrado" el día actual antes de que termine.
+          const yesterdayMidnight = new Date(nowMidnight);
+          yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1);
+
+          const stopDate = lastOfficialDate > yesterdayMidnight ? lastOfficialDate : yesterdayMidnight;
 
           while (current <= stopDate && (current.getMonth() + 1) === mes) {
             const dayStr = current.getDate().toString().padStart(2, '0');
