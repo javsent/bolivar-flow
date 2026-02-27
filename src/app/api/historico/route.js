@@ -11,6 +11,7 @@ const URL_BASE = 'https://www.bcv.org.ve/estadisticas/tipo-cambio-de-referencia-
 const DOMAIN = 'https://www.bcv.org.ve';
 
 // In-Memory Cache to survive warm Vercel invocations across read-only filesystem limitations
+// (Cleared natively on server restart or hot-reload)
 let memoryCache = {};
 
 export async function GET(request) {
