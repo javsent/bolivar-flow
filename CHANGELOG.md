@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - Global `try-catch` blocks in all API routes for robust error reporting.
 
 ### Fixed
+- **Estabilidad de Historial en Vercel (Bug 26/02-27/02)**: Se implementó un *Caché en Memoria* (Memory Cache) para que la API recuerde los días pasados sin depender del disco de solo lectura de Vercel.
+- **Detección Inteligente de Huecos Faltantes**: La API ahora detecta si entre su último dato y el actual falta algún día de semana (Lunes-Viernes). Si es así, fuerza la descarga del historial completo en Excel (Fallback) en lugar de asumir erróneamente que los días intermedios fueron feriados/cerrados.
 - Error de reversión en historial: las tasas oficiales ahora sobrescriben correctamente los marcadores de "Día Cerrado".
 - Regla 00:00 AM: Los marcadores de "Día Cerrado" solo se generan para días pasados, permitiendo al BCV publicar tasas durante todo el día actual sin bloqueos.
 - Error de sintaxis (llave extra) en `/api/historico` que causaba fallo de compilación.

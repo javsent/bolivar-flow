@@ -10,6 +10,9 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const URL_BASE = 'https://www.bcv.org.ve/estadisticas/tipo-cambio-de-referencia-smc';
 const DOMAIN = 'https://www.bcv.org.ve';
 
+// In-Memory Cache to survive warm Vercel invocations across read-only filesystem limitations
+let memoryCache = {};
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -20,8 +23,15 @@ export async function GET(request) {
     const dataPath = path.join(process.cwd(), 'src', 'data', 'bcv', `${anio}.json`);
     let yearData = {};
 
-    if (fs.existsSync(dataPath)) {
+    // 1. Check memory cache first
+    if (memoryCache[anio] && memoryCache[anio][mes] && memoryCache[anio][mes].length > 0) {
+      yearData = memoryCache[anio];
+    }
+    // 2. Fallback to disk (which might be stale on Vercel, but good for local dev / initial load)
+    else if (fs.existsSync(dataPath)) {
       yearData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+      // Populate cache on first disk read
+      memoryCache[anio] = yearData;
     }
 
     let requestedMonthData = yearData[mes] || [];
@@ -66,24 +76,53 @@ export async function GET(request) {
               if (!alreadyExists) {
                 // Validar qué tan atrasados estamos.
                 if (requestedMonthData.length > 0) {
-                  const lastDateStr = requestedMonthData[0].fecha;
-                  const [d0, m0, y0] = lastDateStr.split('/');
-                  const lastDateObj = new Date(`${y0}-${m0}-${d0}T12:00:00`);
-                  const newDateObj = new Date(`${yearStr}-${monthStr}-${day}T12:00:00`);
+                  // Encuentra la última fecha OFICIAL real (no fines de semana generados)
+                  const lastOfficialIndex = requestedMonthData.findIndex(d => !d.isWeekend);
+                  if (lastOfficialIndex !== -1) {
+                    const lastDateStr = requestedMonthData[lastOfficialIndex].fecha;
+                    const [d0, m0, y0] = lastDateStr.split('/');
+                    const lastDateObj = new Date(`${y0}-${m0}-${d0}T12:00:00`);
+                    const newDateObj = new Date(`${yearStr}-${monthStr}-${day}T12:00:00`);
 
-                  const diffDays = Math.round((newDateObj - lastDateObj) / (1000 * 60 * 60 * 24));
-                  if (diffDays > 0 && diffDays <= 4) {
-                    datesFound.push({
-                      fecha: fechaOficial,
-                      usd: usdHome,
-                      euro: eurHome,
-                      isWeekend: false
-                    });
+                    const diffDays = Math.round((newDateObj - lastDateObj) / (1000 * 60 * 60 * 24));
+
+                    // SMART GAP DETECTION: If the gap represents missing weekdays, we MUST use XLSX
+                    // to fill them properly. Fast inject alone will leave them as 'closed'.
+                    let hasMissingWeekdays = false;
+                    if (diffDays > 1) {
+                      let checkDate = new Date(lastDateObj);
+                      checkDate.setDate(checkDate.getDate() + 1);
+                      while (checkDate < newDateObj) {
+                        const dow = checkDate.getDay();
+                        // 0 is Sunday, 6 is Saturday
+                        if (dow !== 0 && dow !== 6) {
+                          hasMissingWeekdays = true;
+                          break;
+                        }
+                        checkDate.setDate(checkDate.getDate() + 1);
+                      }
+                    }
+
+                    if (diffDays > 0 && diffDays <= 4 && !hasMissingWeekdays) {
+                      datesFound.push({
+                        fecha: fechaOficial,
+                        usd: usdHome,
+                        euro: eurHome,
+                        isWeekend: false
+                      });
+                      fastInjectSuccess = true;
+                      console.log(`⚡ Fast Inject (HTML): ${fechaOficial}`);
+                    } else if (hasMissingWeekdays) {
+                      console.log(`⚠️ Gap contains missing weekdays (diffDays: ${diffDays}). Forcing XLSX Fallback.`);
+                      fastInjectSuccess = false; // Force XLSX fallback to recover missing official days
+                    }
+                  } else {
+                    // Si no hay datos previos (o solo placeholders), inyectamos
+                    datesFound.push({ fecha: fechaOficial, usd: usdHome, euro: eurHome, isWeekend: false });
                     fastInjectSuccess = true;
-                    console.log(`⚡ Fast Inject (HTML): ${fechaOficial}`);
                   }
                 } else {
-                  // Si no hay datos previos, inyectamos igual
+                  // Si no hay datos del todo, inyectamos igual
                   datesFound.push({ fecha: fechaOficial, usd: usdHome, euro: eurHome, isWeekend: false });
                   fastInjectSuccess = true;
                 }
@@ -210,14 +249,20 @@ export async function GET(request) {
             const yearStr = current.getFullYear();
             const display = `${dayStr}/${monthStr}/${yearStr}`;
 
-            if (existingMap[display]) {
+            if (existingMap[display] && !existingMap[display].isWeekend) {
               lastKnown = existingMap[display];
               filledData.push(lastKnown);
             } else if (lastKnown) {
+              // Ensure we accurately record Sat/Sun vs missing weekday (Feriado)
+              const currentDow = current.getDay();
+              const isActualWeekendDay = (currentDow === 0 || currentDow === 6);
+
               filledData.push({
                 fecha: display,
                 usd: lastKnown.usd,
                 euro: lastKnown.euro,
+                // Si es un hueco en día de semana, igual lo tratamos como cerrado/feriado, 
+                // pero estructuralmente sabemos por qué es
                 isWeekend: true
               });
             }
@@ -233,6 +278,9 @@ export async function GET(request) {
 
         yearData[mes] = filledData;
         requestedMonthData = filledData;
+
+        // Update memory cache!
+        memoryCache[anio] = yearData;
 
         // ESCRITURA SEGURA (Opcional para Vercel)
         try {
