@@ -250,9 +250,25 @@ export async function GET(request) {
             const yearStr = current.getFullYear();
             const display = `${dayStr}/${monthStr}/${yearStr}`;
 
-            if (existingMap[display] && !existingMap[display].isWeekend) {
-              lastKnown = existingMap[display];
-              filledData.push(lastKnown);
+            if (existingMap[display]) {
+              if (!existingMap[display].isWeekend) {
+                lastKnown = existingMap[display];
+                filledData.push(lastKnown);
+              } else {
+                // Si ya existe como fin de semana/feriado
+                if (lastKnown) {
+                  // Lo actualizamos con la tasa real más reciente de este mes
+                  filledData.push({
+                    fecha: display,
+                    usd: lastKnown.usd,
+                    euro: lastKnown.euro,
+                    isWeekend: true
+                  });
+                } else {
+                  // Al principio del mes, lastKnown es nulo. Mantenemos el marcador heredado del mes anterior.
+                  filledData.push(existingMap[display]);
+                }
+              }
             } else if (lastKnown) {
               // Ensure we accurately record Sat/Sun vs missing weekday (Feriado)
               const currentDow = current.getDay();
