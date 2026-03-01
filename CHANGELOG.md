@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2026-02-27] - Estabilidad en Vercel & Datos Históricos
 ### Fixed
+- **Optimización de Fallback XLSX (Bug 28/02)**: Se redujo radicalmente el consumo de recursos de la API al descargar hojas de cálculo del BCV. Anteriormente intentaba descargar y procesar 5 archivos de años anteriores (15MB+), provocando un error de *Timeout* (504) por límite de tiempo de 10 segundos en Vercel. Ahora, descarga el top 1 estricto (año actual), resolviendo la pérdida invisible de días "jueves/viernes" pasados tras un finde.
 - **Estabilidad de Historial en Vercel (Bug 26/02-27/02)**: Se implementó un *Caché en Memoria* (Memory Cache) para que la API recuerde los días pasados sin depender del disco de solo lectura de Vercel.
 - **Detección Inteligente de Huecos Faltantes**: La API ahora detecta si entre su último dato y el actual falta algún día de semana (Lunes-Viernes). Si es así, fuerza la descarga del historial completo en Excel (Fallback) en lugar de asumir erróneamente que los días intermedios fueron feriados/cerrados.
 
