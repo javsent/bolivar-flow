@@ -154,11 +154,20 @@ export async function GET(request) {
             if (!links.includes(fullLink)) links.push(fullLink);
           });
 
-          links = links.slice(0, 5);
+          // OPTIMIZATION FOR VERCEL: Only fetch the VERY FIRST link (current year). 
+          // Downloading multiple 5MB Excel files exceeds Vercel's 1024MB Memory / 10s Timeout.
+          links = links.slice(0, 1);
 
           for (const link of links) {
             try {
-              const response = await axios.get(link, { responseType: 'arraybuffer', timeout: 8000 });
+              console.log(`📡 Descargando archivo XLSX: ${link}`);
+              const response = await axios.get(link, {
+                responseType: 'arraybuffer',
+                timeout: 8000,
+                headers: { 'User-Agent': 'Mozilla/5.0' }
+              });
+
+              console.log(`✅ XLSX descargado. Parseando buffer...`);
               const workbook = XLSX.read(response.data, { type: 'buffer' });
 
               workbook.SheetNames.forEach(name => {
@@ -184,12 +193,13 @@ export async function GET(request) {
                   }
                 }
               });
+              console.log(`Exito parcial: XLSX extrajo ${datesFound.length} fechas para el mes ${mes}`);
             } catch (e) {
-              console.warn(`Error leyendo XLS: ${link}`);
+              console.error(`💥 Error crítico leyendo XLS: ${link}`, e.message);
             }
           }
         } catch (e) {
-          console.warn("⚠️ Falló XLSX Fallback.", e.message);
+          console.error("⚠️ Falló descarga índice XLSX Fallback.", e.message);
         }
       }
 
