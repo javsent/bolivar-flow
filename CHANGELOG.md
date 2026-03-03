@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2026-03-03] - Fix Transición de Mes en Histórico
 ### Fixed
+- **Detección de Huecos Inter-Mensuales (Bug 02/03)**: Se corrigió un error crítico donde el "Sistema Inteligente de Detección de Huecos" no cruzaba la frontera del mes. Al iniciar un mes nuevo (ej. 3 de Marzo), la API no veía las fechas del mes pasado (27 de Febrero), por lo que ignoraba que faltaba el Lunes 2 de Marzo y no descargaba el Excel de emergencia. Ahora, la Detección de Huecos es capaz de leer la última fecha del mes anterior para calcular correctamente los días perdidos y forzar el `XLSX Fallback`.
 - **Herencia de Tasa en Inicios de Mes (Bug 01/03)**: Se corrigió un bug donde el día `01` de un nuevo mes, si caía fin de semana, desaparecía de la API y forzaba a la App a usar la tasa del día actual. Ahora, la API arranca *siempre* a rellenar desde el día `01` y busca dinámicamente la última tasa oficial del **mes anterior** para arrastrarla exitosamente (ej. el 01/03 ahora copia perfectamente el 27/02).
 
 ## [2026-02-27] - Estabilidad en Vercel & Datos Históricos

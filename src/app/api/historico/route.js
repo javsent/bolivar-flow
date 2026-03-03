@@ -75,55 +75,84 @@ export async function GET(request) {
               const alreadyExists = requestedMonthData.some(d => d.fecha === fechaOficial);
 
               if (!alreadyExists) {
-                // Validar qué tan atrasados estamos.
+                // Validar qué tan atrasados estamos buscando la última fecha OFICIAL real.
+                let lastDateStr = null;
+
+                // 1. Intentar en el mes actual
                 if (requestedMonthData.length > 0) {
-                  // Encuentra la última fecha OFICIAL real (no fines de semana generados)
                   const lastOfficialIndex = requestedMonthData.findIndex(d => !d.isWeekend);
                   if (lastOfficialIndex !== -1) {
-                    const lastDateStr = requestedMonthData[lastOfficialIndex].fecha;
-                    const [d0, m0, y0] = lastDateStr.split('/');
-                    const lastDateObj = new Date(`${y0}-${m0}-${d0}T12:00:00`);
-                    const newDateObj = new Date(`${yearStr}-${monthStr}-${day}T12:00:00`);
+                    lastDateStr = requestedMonthData[lastOfficialIndex].fecha;
+                  }
+                }
 
-                    const diffDays = Math.round((newDateObj - lastDateObj) / (1000 * 60 * 60 * 24));
+                // 2. Si el mes actual está vacío de fechas oficiales, buscar en el mes anterior
+                if (!lastDateStr) {
+                  let prevMonth = mes - 1;
+                  let prevYear = anio;
+                  if (prevMonth === 0) { prevMonth = 12; prevYear -= 1; }
 
-                    // SMART GAP DETECTION: If the gap represents missing weekdays, we MUST use XLSX
-                    // to fill them properly. Fast inject alone will leave them as 'closed'.
-                    let hasMissingWeekdays = false;
-                    if (diffDays > 1) {
-                      let checkDate = new Date(lastDateObj);
-                      checkDate.setDate(checkDate.getDate() + 1);
-                      while (checkDate < newDateObj) {
-                        const dow = checkDate.getDay();
-                        // 0 is Sunday, 6 is Saturday
-                        if (dow !== 0 && dow !== 6) {
-                          hasMissingWeekdays = true;
-                          break;
-                        }
-                        checkDate.setDate(checkDate.getDate() + 1);
-                      }
-                    }
-
-                    if (diffDays > 0 && diffDays <= 4 && !hasMissingWeekdays) {
-                      datesFound.push({
-                        fecha: fechaOficial,
-                        usd: usdHome,
-                        euro: eurHome,
-                        isWeekend: false
-                      });
-                      fastInjectSuccess = true;
-                      console.log(`⚡ Fast Inject (HTML): ${fechaOficial}`);
-                    } else if (hasMissingWeekdays) {
-                      console.log(`⚠️ Gap contains missing weekdays (diffDays: ${diffDays}). Forcing XLSX Fallback.`);
-                      fastInjectSuccess = false; // Force XLSX fallback to recover missing official days
-                    }
+                  let prevData = [];
+                  if (prevYear === anio) {
+                    prevData = yearData[prevMonth] || [];
                   } else {
-                    // Si no hay datos previos (o solo placeholders), inyectamos
-                    datesFound.push({ fecha: fechaOficial, usd: usdHome, euro: eurHome, isWeekend: false });
+                    try {
+                      const prevPath = path.join(process.cwd(), 'src', 'data', 'bcv', `${prevYear}.json`);
+                      if (fs.existsSync(prevPath)) {
+                        const prevYearData = JSON.parse(fs.readFileSync(prevPath, 'utf8'));
+                        prevData = prevYearData[prevMonth] || [];
+                      }
+                    } catch (e) { }
+                  }
+
+                  if (prevData && prevData.length > 0) {
+                    // findIndex gets the latest date because arrays are sorted descending
+                    const lastOfficialIndex = prevData.findIndex(d => !d.isWeekend);
+                    if (lastOfficialIndex !== -1) {
+                      lastDateStr = prevData[lastOfficialIndex].fecha;
+                    }
+                  }
+                }
+
+                if (lastDateStr) {
+                  const [d0, m0, y0] = lastDateStr.split('/');
+                  const lastDateObj = new Date(`${y0}-${m0}-${d0}T12:00:00`);
+                  const newDateObj = new Date(`${yearStr}-${monthStr}-${day}T12:00:00`);
+
+                  const diffDays = Math.round((newDateObj - lastDateObj) / (1000 * 60 * 60 * 24));
+
+                  // SMART GAP DETECTION: If the gap represents missing weekdays, we MUST use XLSX
+                  // to fill them properly. Fast inject alone will leave them as 'closed'.
+                  let hasMissingWeekdays = false;
+                  if (diffDays > 1) {
+                    let checkDate = new Date(lastDateObj);
+                    checkDate.setDate(checkDate.getDate() + 1);
+                    while (checkDate < newDateObj) {
+                      const dow = checkDate.getDay();
+                      // 0 is Sunday, 6 is Saturday
+                      if (dow !== 0 && dow !== 6) {
+                        hasMissingWeekdays = true;
+                        break;
+                      }
+                      checkDate.setDate(checkDate.getDate() + 1);
+                    }
+                  }
+
+                  if (diffDays > 0 && diffDays <= 4 && !hasMissingWeekdays) {
+                    datesFound.push({
+                      fecha: fechaOficial,
+                      usd: usdHome,
+                      euro: eurHome,
+                      isWeekend: false
+                    });
                     fastInjectSuccess = true;
+                    console.log(`⚡ Fast Inject (HTML): ${fechaOficial}`);
+                  } else if (hasMissingWeekdays) {
+                    console.log(`⚠️ Gap contains missing weekdays (diffDays: ${diffDays}). Forcing XLSX Fallback.`);
+                    fastInjectSuccess = false; // Force XLSX fallback to recover missing official days
                   }
                 } else {
-                  // Si no hay datos del todo, inyectamos igual
+                  // Si no hay datos del todo (ni este mes ni el anterior), inyectamos igual
                   datesFound.push({ fecha: fechaOficial, usd: usdHome, euro: eurHome, isWeekend: false });
                   fastInjectSuccess = true;
                 }
