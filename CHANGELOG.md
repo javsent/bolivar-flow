@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-03-03] - Fix Transición de Mes en Histórico
+### Fixed
+- **Herencia de Tasa en Inicios de Mes (Bug 01/03)**: Se corrigió un bug donde el día `01` de un nuevo mes, si caía fin de semana, desaparecía de la API y forzaba a la App a usar la tasa del día actual. Ahora, la API arranca *siempre* a rellenar desde el día `01` y busca dinámicamente la última tasa oficial del **mes anterior** para arrastrarla exitosamente (ej. el 01/03 ahora copia perfectamente el 27/02).
+
 ## [2026-02-27] - Estabilidad en Vercel & Datos Históricos
 ### Fixed
 - **Optimización de Fallback XLSX (Bug 28/02)**: Se redujo radicalmente el consumo de recursos de la API al descargar hojas de cálculo del BCV. Anteriormente intentaba descargar y procesar 5 archivos de años anteriores (15MB+), provocando un error de *Timeout* (504) por límite de tiempo de 10 segundos en Vercel. Ahora, descarga el top 1 estricto (año actual), resolviendo la pérdida invisible de días "jueves/viernes" pasados tras un finde.

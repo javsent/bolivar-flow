@@ -227,74 +227,106 @@ export async function GET(request) {
         const filledData = [];
         let lastKnown = null;
 
-        if (requestedMonthData.length > 0) {
-          const firstStr = requestedMonthData[0].fecha;
-          const [d0, m0, y0] = firstStr.split('/');
-          let current = new Date(`${y0}-${m0}-${d0}T12:00:00`);
+        // BUSCAR LASTKNOWN HEREDADO DEL MES ANTERIOR
+        let prevMonth = mes - 1;
+        let prevYear = anio;
+        if (prevMonth === 0) { prevMonth = 12; prevYear -= 1; }
 
-          // Obtener la fecha de "hoy" en Venezuela para el stop cronológico
-          const nowVET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Caracas" }));
-          const nowMidnight = new Date(nowVET.getFullYear(), nowVET.getMonth(), nowVET.getDate(), 12, 0, 0, 0);
-
-          const existingMap = {};
-          requestedMonthData.forEach(d => existingMap[d.fecha] = d);
-
-          // El stop debe ser hoy o la fecha más reciente oficial (si BCV adelantó la tasa)
-          let lastOfficialDate = requestedMonthData.reduce((max, entry) => {
-            if (entry.isWeekend) return max;
-            const [d, m, y] = entry.fecha.split('/').map(Number);
-            const dt = new Date(y, m - 1, d, 12, 0, 0, 0);
-            return dt > max ? dt : max;
-          }, new Date(0));
-
-          // REGLA 00:00 AM: Solo rellenar hasta ayer (o hoy si ya es mañana VET)
-          // Esto evita marcar como "cerrado" el día actual antes de que termine.
-          const yesterdayMidnight = new Date(nowMidnight);
-          yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1);
-
-          const stopDate = lastOfficialDate > yesterdayMidnight ? lastOfficialDate : yesterdayMidnight;
-
-          while (current <= stopDate && (current.getMonth() + 1) === mes) {
-            const dayStr = current.getDate().toString().padStart(2, '0');
-            const monthStr = (current.getMonth() + 1).toString().padStart(2, '0');
-            const yearStr = current.getFullYear();
-            const display = `${dayStr}/${monthStr}/${yearStr}`;
-
-            if (existingMap[display]) {
-              if (!existingMap[display].isWeekend) {
-                lastKnown = existingMap[display];
-                filledData.push(lastKnown);
-              } else {
-                // Si ya existe como fin de semana/feriado
-                if (lastKnown) {
-                  // Lo actualizamos con la tasa real más reciente de este mes
-                  filledData.push({
-                    fecha: display,
-                    usd: lastKnown.usd,
-                    euro: lastKnown.euro,
-                    isWeekend: true
-                  });
-                } else {
-                  // Al principio del mes, lastKnown es nulo. Mantenemos el marcador heredado del mes anterior.
-                  filledData.push(existingMap[display]);
-                }
-              }
-            } else if (lastKnown) {
-              // Ensure we accurately record Sat/Sun vs missing weekday (Feriado)
-              const currentDow = current.getDay();
-              const isActualWeekendDay = (currentDow === 0 || currentDow === 6);
-
-              filledData.push({
-                fecha: display,
-                usd: lastKnown.usd,
-                euro: lastKnown.euro,
-                // Si es un hueco en día de semana, igual lo tratamos como cerrado/feriado, 
-                // pero estructuralmente sabemos por qué es
-                isWeekend: true
-              });
+        let prevData = [];
+        if (prevYear === anio) {
+          prevData = yearData[prevMonth] || [];
+        } else {
+          try {
+            const prevPath = path.join(process.cwd(), 'src', 'data', 'bcv', `${prevYear}.json`);
+            if (fs.existsSync(prevPath)) {
+              const prevYearData = JSON.parse(fs.readFileSync(prevPath, 'utf8'));
+              prevData = prevYearData[prevMonth] || [];
             }
-            current.setDate(current.getDate() + 1);
+          } catch (e) { }
+        }
+
+        if (prevData && prevData.length > 0) {
+          const oficiales = prevData.filter(d => !d.isWeekend);
+          if (oficiales.length > 0) {
+            const sortedPrev = [...oficiales].sort((a, b) => {
+              const [da, ma, ya] = a.fecha.split('/');
+              const [db, mb, yb] = b.fecha.split('/');
+              return new Date(`${ya}-${ma}-${da}`) - new Date(`${yb}-${mb}-${db}`);
+            });
+            lastKnown = sortedPrev[sortedPrev.length - 1];
           }
+        }
+
+        // FORZAR EL INICIO EN EL DÍA 01 DEL MES SOLICITADO
+        const mesStrP = mes.toString().padStart(2, '0');
+        let current = new Date(`${anio}-${mesStrP}-01T12:00:00`);
+
+        // Obtener la fecha de "hoy" en Venezuela para el stop cronológico
+        const nowVET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Caracas" }));
+        const nowMidnight = new Date(nowVET.getFullYear(), nowVET.getMonth(), nowVET.getDate(), 12, 0, 0, 0);
+
+        const existingMap = {};
+        requestedMonthData.forEach(d => existingMap[d.fecha] = d);
+
+        // El stop debe ser hoy o la fecha más reciente oficial (si BCV adelantó la tasa)
+        let lastOfficialDate = requestedMonthData.reduce((max, entry) => {
+          if (entry.isWeekend) return max;
+          const [d, m, y] = entry.fecha.split('/').map(Number);
+          const dt = new Date(y, m - 1, d, 12, 0, 0, 0);
+          return dt > max ? dt : max;
+        }, new Date(0));
+
+        // REGLA 00:00 AM: Solo rellenar hasta ayer (o hoy si ya es mañana VET)
+        const yesterdayMidnight = new Date(nowMidnight);
+        yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1);
+
+        // Limitar stopDate al último día del mes solicitado (para consultas de meses pasados)
+        const endOfRequestedMonth = new Date(anio, mes, 0, 12, 0, 0, 0);
+        let stopDate = lastOfficialDate > yesterdayMidnight ? lastOfficialDate : yesterdayMidnight;
+        if (stopDate > endOfRequestedMonth) {
+          stopDate = endOfRequestedMonth;
+        }
+
+        while (current <= stopDate && (current.getMonth() + 1) === mes) {
+          const dayStr = current.getDate().toString().padStart(2, '0');
+          const monthStr = (current.getMonth() + 1).toString().padStart(2, '0');
+          const yearStr = current.getFullYear();
+          const display = `${dayStr}/${monthStr}/${yearStr}`;
+
+          if (existingMap[display]) {
+            if (!existingMap[display].isWeekend) {
+              lastKnown = existingMap[display];
+              filledData.push(lastKnown);
+            } else {
+              // Si ya existe como fin de semana/feriado
+              if (lastKnown) {
+                // Lo actualizamos con la tasa real más reciente de este mes
+                filledData.push({
+                  fecha: display,
+                  usd: lastKnown.usd,
+                  euro: lastKnown.euro,
+                  isWeekend: true
+                });
+              } else {
+                // Al principio del mes, lastKnown es nulo. Mantenemos el marcador heredado del mes anterior.
+                filledData.push(existingMap[display]);
+              }
+            }
+          } else if (lastKnown) {
+            // Ensure we accurately record Sat/Sun vs missing weekday (Feriado)
+            const currentDow = current.getDay();
+            const isActualWeekendDay = (currentDow === 0 || currentDow === 6);
+
+            filledData.push({
+              fecha: display,
+              usd: lastKnown.usd,
+              euro: lastKnown.euro,
+              // Si es un hueco en día de semana, igual lo tratamos como cerrado/feriado, 
+              // pero estructuralmente sabemos por qué es
+              isWeekend: true
+            });
+          }
+          current.setDate(current.getDate() + 1);
         }
 
         filledData.sort((a, b) => {
