@@ -351,5 +351,60 @@
       "isWeekend": true
     }
   ],
-  "3": []
+  "3": [
+    {
+      "fecha": "09/03/2026",
+      "usd": 433.1664,
+      "euro": 455.5482,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/03/2026",
+      "usd": 433.1664,
+      "euro": 455.5482,
+      "isWeekend": true
+    },
+    {
+      "fecha": "07/03/2026",
+      "usd": 433.1664,
+      "euro": 455.5482,
+      "isWeekend": true
+    },
+    {
+      "fecha": "06/03/2026",
+      "usd": 433.1664,
+      "euro": 455.5482,
+      "isWeekend": false
+    },
+    {
+      "fecha": "05/03/2026",
+      "usd": 426.0465,
+      "euro": 449.1973,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/03/2026",
+      "usd": 423.8291,
+      "euro": 447.8864,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/03/2026",
+      "usd": 421.8772,
+      "euro": 446.5412,
+      "isWeekend": false
+    },
+    {
+      "fecha": "02/03/2026",
+      "usd": 419.9873,
+      "euro": 444.606,
+      "isWeekend": false
+    },
+    {
+      "fecha": "01/03/2026",
+      "usd": 417.3579,
+      "euro": 443.1125,
+      "isWeekend": true
+    }
+  ]
 }

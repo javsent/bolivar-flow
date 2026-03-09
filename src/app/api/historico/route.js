@@ -43,6 +43,7 @@ export async function GET(request) {
       let fastInjectSuccess = false;
       let datesFound = [];
       let changed = false;
+      let fallbackHtmlDate = null; // Guardará la tasa HTML si el BCV tarda en subir el Excel
 
       // --- 1. INTENTO RÁPIDO (HTML FRONT-PAGE) ---
       try {
@@ -150,6 +151,9 @@ export async function GET(request) {
                   } else if (hasMissingWeekdays) {
                     console.log(`⚠️ Gap contains missing weekdays (diffDays: ${diffDays}). Forcing XLSX Fallback.`);
                     fastInjectSuccess = false; // Force XLSX fallback to recover missing official days
+
+                    // Almacenamos la fecha HTML como rescate por si el XLSX aún no ha sido actualizado
+                    fallbackHtmlDate = { fecha: fechaOficial, usd: usdHome, euro: eurHome, isWeekend: false };
                   }
                 } else {
                   // Si no hay datos del todo (ni este mes ni el anterior), inyectamos igual
@@ -229,6 +233,17 @@ export async function GET(request) {
           }
         } catch (e) {
           console.error("⚠️ Falló descarga índice XLSX Fallback.", e.message);
+        }
+
+        // --- 2.5 RESCATE DE TASA HTML (GRACEFUL DEGRADATION) ---
+        // Si forzamos el XLSX porque faltaban días, pero el XLSX del BCV estaba desactualizado (o falló red)
+        // y nos retornó CERO fechas nuevas para el mes actual, debemos rescatar la tasa del viernes (HTML).
+        // Si no lo hacemos, datesFound = 0, fill-forward se salta, y el array queda vacío arruinando el calendario.
+        if (datesFound.length === 0 && fallbackHtmlDate) {
+          console.log(`🚑 XLSX estaba desactualizado/falló. Rescatando tasa HTML ignorada: ${fallbackHtmlDate.fecha}`);
+          datesFound.push(fallbackHtmlDate);
+          // Al hacer esto, 'changed' será true más abajo, e iniciará el 'fill-forward'. 
+          // Los días de semana perdidos en el medio quedarán como 'Cerrados' temporalmente hasta el lunes.
         }
       }
 

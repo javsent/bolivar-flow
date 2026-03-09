@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-03-09] - Fix Degradación Grácil en Fin de Semana
+### Fixed
+- **Desaparición de Datos en Fin de Semana (Bug Excel BCV)**: Se corrigió un error crítico donde la API borraba todos los datos del mes durante los fines de semana si la caché de Vercel se limpiaba. Esto ocurría porque la API forzaba la descarga del Excel del BCV al detectar días perdidos, pero el BCV no había subido el archivo actualizado. Ahora, la API implementa **Degradación Grácil**: si el Excel está desactualizado o falla, la API rescata la fecha HTML que obtuvo de la portada del BCV, garantizando que el mes se reconstruya con éxito hasta el último día oficial publicado (Viernes) y no lance un array vacío.
+- **Base Sólida Inicial**: Se repobló el historial estático (`2026.json`) con las fechas hasta el 9 de marzo para que GitHub posea una copia real reciente y no una matriz vacía, lo cual ayuda a Vercel a despertar de un cold-start de forma segura.
+
 ## [2026-03-03] - Fix Transición de Mes en Histórico
 ### Fixed
 - **Detección de Huecos Inter-Mensuales (Bug 02/03)**: Se corrigió un error crítico donde el "Sistema Inteligente de Detección de Huecos" no cruzaba la frontera del mes. Al iniciar un mes nuevo (ej. 3 de Marzo), la API no veía las fechas del mes pasado (27 de Febrero), por lo que ignoraba que faltaba el Lunes 2 de Marzo y no descargaba el Excel de emergencia. Ahora, la Detección de Huecos es capaz de leer la última fecha del mes anterior para calcular correctamente los días perdidos y forzar el `XLSX Fallback`.
