@@ -2,70 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
-/* --- CONFIGURACIÓN BASE --- */
+/* --- DESIGN SYSTEM TOKENS --- */
 :root {
+  --app-bg: #0f172a;
+  --card-bg: rgba(30, 41, 59, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --emerald-accent: #10b981;
+  --emerald-glow: rgba(16, 185, 129, 0.2);
+  --blue-accent: #3b82f6;
+  --blue-glow: rgba(59, 130, 246, 0.2);
   --foreground-rgb: 255, 255, 255;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: #0f172a !important;
-  /* Hace que la app se sienta nativa (no se puede seleccionar texto general) */
+  background: var(--app-bg) !important;
+  /* App-like feel */
   -webkit-user-select: none;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
-/* --- LÓGICA DE ARRASTRE DE VENTANA (ELECTRON) --- */
+/* --- PREMIUM UTILITIES --- */
 
-/* 1. Por defecto, toda la ventana sirve para arrastrarla */
-body {
-  -webkit-app-region: drag;
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-/* 2. EXCEPCIONES: Elementos interactivos */
-/* Todo lo que esté aquí será CLICKEABLE y NO arrastrará la ventana */
-button, 
-input, 
-select, 
-textarea,
-a, 
-[role="button"],
-.no-drag {
-  -webkit-app-region: no-drag !important;
+.emerald-gradient-text {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.blue-gradient-text {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Interactive elements */
+button,
+input,
+select,
+a {
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 3. Permitir seleccionar texto SOLO dentro de inputs y textareas */
-input, textarea {
+input,
+textarea {
   -webkit-user-select: text;
   user-select: text;
 }
 
-/* --- UTILIDADES --- */
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 
-/* Ocultar barra de scroll pero permitir desplazamiento */
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s infinite ease-in-out;
+}
+
+/* --- SCROLLBARS --- */
 .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Animaciones suaves para la carga */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-in {
-  animation: fadeIn 0.4s ease-out forwards;
-}
-
-/* --- BARRA DE SCROLL PERSONALIZADA --- */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -74,15 +116,17 @@ input, textarea {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #334155;
-  border-radius: 10px;
+  border-radius: 100px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #10b981;
+  background: var(--emerald-accent);
 }
 
-/* Soporte para Firefox */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #334155 transparent;
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .glass-card {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 }

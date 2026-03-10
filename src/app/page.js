@@ -169,37 +169,40 @@ export default function CurrencyApp() {
   // --- LÓGICA DE TASAS (WEB API) MEJORADA ---
   const fetchCurrentRates = async () => {
     setLoading(true);
-    historicoCache.current = {}; // Invalidar caché al refrescar manualmente
+    historicoCache.current = {};
     try {
       const res = await fetch("/api/tasas");
       if (!res.ok) throw new Error("Falló API");
       const data = await res.json();
 
-      const today = new Date();
-      let tasaVigente = await findValidRateBackwards(today, 7, false);
-
-      if (tasaVigente) {
-        setRates({
-          ...data,
-          bcv: tasaVigente.usd,
-          euro: tasaVigente.euro,
-        });
-        setDisplayDate(
-          today.toLocaleDateString("es-ES", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }),
-        );
-      } else {
+      // Priorizar datos en vivo del scraper si están disponibles
+      if (data.bcv > 0) {
         setRates(data);
-        setDisplayDate(
-          today.toLocaleDateString("es-ES", {
+        setDisplayDate(data.fecha || new Date().toLocaleDateString("es-ES", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }));
+      } else {
+        // Fallback al histórico solo si el scraper falla
+        const today = new Date();
+        let tasaVigente = await findValidRateBackwards(today, 7, false);
+
+        if (tasaVigente) {
+          setRates({
+            ...data,
+            bcv: tasaVigente.usd,
+            euro: tasaVigente.euro,
+          });
+          setDisplayDate(tasaVigente.fecha);
+        } else {
+          setRates(data);
+          setDisplayDate(today.toLocaleDateString("es-ES", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
-          }),
-        );
+          }));
+        }
       }
 
       setIsHistoricalRate(false);
@@ -685,8 +688,8 @@ export default function CurrencyApp() {
       >
         <div className="text-center mb-10 flex flex-col items-center">
           <div className="flex items-center justify-center gap-4">
-            <h1 className="text-5xl font-black uppercase tracking-tighter text-emerald-400 leading-none">
-              BOLÍVAR <span className="text-blue-500">FLOW</span>
+            <h1 className="text-5xl font-black uppercase tracking-tighter leading-none">
+              <span className="emerald-gradient-text">BOLÍVAR</span> <span className="blue-gradient-text">FLOW</span>
             </h1>
             <BoltIcon className="h-12 w-10 text-blue-500 flex-shrink-0 -mt-1" />
           </div>
@@ -793,30 +796,30 @@ export default function CurrencyApp() {
         </button>
       </div>
 
-      <div className="w-full max-w-md bg-[#1e293b] p-1 rounded-xl mb-4 flex border border-[#334155] shadow-md relative z-20">
+      <div className="w-full max-w-md glass-card p-1 rounded-2xl mb-4 flex shadow-2xl relative z-20 animate-slide-up">
         <button
           onClick={() => setView("calculator")}
-          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 transition-all ${view === "calculator" ? "bg-[#334155] text-emerald-400 font-bold shadow-inner" : "text-slate-500 hover:text-white"}`}
+          className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all ${view === "calculator" ? "bg-white/10 text-emerald-400 font-bold shadow-lg" : "text-slate-500 hover:text-white"}`}
         >
           <CalculatorIcon className="h-4 w-4" /> Calc
         </button>
         <button
           onClick={() => setView("history")}
-          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 transition-all ${view === "history" ? "bg-[#334155] text-emerald-400 font-bold shadow-inner" : "text-slate-500 hover:text-white"}`}
+          className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all ${view === "history" ? "bg-white/10 text-emerald-400 font-bold shadow-lg" : "text-slate-500 hover:text-white"}`}
         >
           <CalendarDaysIcon className="h-4 w-4" /> Histórico
         </button>
       </div>
 
-      <div className="w-full max-w-md bg-[#1e293b] p-6 rounded-2xl min-h-[520px] relative z-10 flex flex-col shadow-xl border border-[#334155]">
+      <div className="w-full max-w-md glass-card p-8 rounded-3xl min-h-[540px] relative z-10 flex flex-col shadow-2xl animate-slide-up [animation-delay:100ms]">
         {view === "calculator" ? (
           <div className="animate-in fade-in duration-300 flex-1 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-black uppercase tracking-tight text-emerald-400">
-                  BOLÍVAR <span className="text-blue-500">FLOW</span>
+                <h1 className="text-3xl font-black uppercase tracking-tight leading-none">
+                  <span className="emerald-gradient-text">BOLÍVAR</span> <span className="blue-gradient-text">FLOW</span>
                 </h1>
-                <BoltIcon className="h-8 w-8 text-blue-500 animate-pulse" />
+                <BoltIcon className="h-8 w-8 text-blue-500 animate-pulse-subtle" />
               </div>
               <div
                 className={`px-2 py-1 rounded text-[10px] font-bold border ${isHistoricalRate ? "bg-amber-500/10 text-amber-400 border-amber-500" : "bg-emerald-500/10 text-emerald-400 border-emerald-500"}`}
@@ -825,32 +828,33 @@ export default function CurrencyApp() {
               </div>
             </div>
 
-            <div className="mb-6 p-6 rounded-2xl bg-slate-900 border border-slate-700 text-center shadow-inner relative overflow-hidden">
-              <h2 className="text-xl font-extrabold text-emerald-400 uppercase mb-1">
+            <div className="mb-8 p-6 rounded-2xl bg-slate-900/40 border border-white/5 text-center shadow-inner relative overflow-hidden group">
+              <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+              <h2 className="text-xl font-extrabold text-emerald-400 uppercase mb-1 tracking-wider">
                 {buttonLabels[activeRate]}
               </h2>
               <p
                 className={`text-[10px] mb-3 font-bold uppercase tracking-[0.2em] ${isHistoricalRate ? "text-amber-400" : "text-slate-500"}`}
               >
-                {isHistoricalRate ? "Fecha Valor: " : "Vigencia: "}{" "}
+                {isHistoricalRate ? "Fecha Valor: " : "Vigencia Live: "}{" "}
                 {displayDate}
               </p>
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-lg text-slate-400">
+              <div className="flex items-center justify-center gap-2 relative z-10">
+                <span className="text-lg text-slate-400 font-medium">
                   1 {activeRate === "euro" ? "€" : "$"} =
                 </span>
-                <span className="text-4xl font-bold text-white">
+                <span className="text-4xl font-black text-white tracking-tight">
                   {new Intl.NumberFormat("de-DE", {
                     minimumFractionDigits: 2,
                   }).format(rates[activeRate] || 0)}
                 </span>
                 <button
                   onClick={handleCopyRate}
-                  className="p-1.5 rounded-md hover:bg-slate-800 text-slate-500 hover:text-emerald-400 transition-colors"
+                  className="p-1.5 rounded-xl hover:bg-emerald-500/20 text-slate-500 hover:text-emerald-400 transition-all active:scale-90"
                 >
-                  <ClipboardDocumentIcon className="h-4 w-4" />
+                  <ClipboardDocumentIcon className="h-5 w-5" />
                 </button>
-                <span className="text-lg font-bold text-slate-400">Bs</span>
+                <span className="text-lg font-extrabold text-slate-400">Bs</span>
               </div>
             </div>
 
@@ -877,7 +881,7 @@ export default function CurrencyApp() {
                   onClick={() => {
                     try {
                       dateInputRef.current?.showPicker();
-                    } catch (e) {}
+                    } catch (e) { }
                   }}
                   className={`relative flex items-center justify-center w-12 h-[42px] rounded-xl border transition-all cursor-pointer overflow-hidden ${isHistoricalRate ? "bg-amber-500/20 border-amber-500 text-amber-400" : "bg-[#0f172a] border-[#334155] text-slate-400 hover:border-emerald-500"}`}
                 >
@@ -905,7 +909,7 @@ export default function CurrencyApp() {
             </div>
 
             <div className="space-y-6 flex-1">
-              <div className="w-full bg-[#0f172a] rounded-xl border border-[#334155] flex items-center p-4 focus-within:border-emerald-500 transition-colors">
+              <div className="w-full bg-slate-900/50 rounded-2xl border border-white/5 flex items-center p-4 focus-within:border-emerald-500/50 focus-within:bg-slate-900/80 transition-all shadow-inner group">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -913,7 +917,7 @@ export default function CurrencyApp() {
                   onChange={handleAmountChange}
                   onPaste={handlePaste}
                   placeholder="0,00"
-                  className="flex-1 bg-transparent text-3xl font-mono text-white outline-none min-w-0"
+                  className="flex-1 bg-transparent text-4xl font-mono text-white outline-none min-w-0 placeholder:text-slate-700"
                 />
                 <span className="text-sm text-slate-500 font-sans uppercase font-bold ml-2 shrink-0">
                   {isForeignToVes
@@ -924,28 +928,31 @@ export default function CurrencyApp() {
                 </span>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex justify-center relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-full h-px bg-white/5"></div>
+                </div>
                 <button
                   onClick={handleInvert}
-                  className="bg-[#10b981] p-3 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all"
+                  className="relative z-10 bg-emerald-500 p-3.5 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:scale-110 active:scale-90 transition-all hover:bg-emerald-400 group"
                 >
-                  <ArrowsUpDownIcon className="h-6 w-6 text-slate-900" />
+                  <ArrowsUpDownIcon className="h-6 w-6 text-slate-900 group-hover:rotate-180 transition-transform duration-500" />
                 </button>
               </div>
 
-              <div className="flex flex-col gap-3">
-                <div className="w-full bg-[#334155]/20 text-3xl font-mono text-emerald-400 p-4 rounded-xl border border-[#334155]/30 flex justify-between items-center h-[80px]">
-                  <span className="truncate pr-2">
+              <div className="flex flex-col gap-4">
+                <div className="w-full bg-emerald-500/5 text-4xl font-mono text-emerald-400 p-6 rounded-2xl border border-emerald-500/20 flex justify-between items-center min-h-[100px] shadow-lg">
+                  <span className="truncate pr-2 font-black tracking-tighter">
                     {formatCurrency(converted)}
                   </span>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 shrink-0">
                     <button
                       onClick={handleCopySingleResult}
-                      className="p-2 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 transition-all active:scale-95"
+                      className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 transition-all active:scale-90 border border-white/5"
                     >
                       <ClipboardDocumentIcon className="h-5 w-5" />
                     </button>
-                    <span className="text-sm text-slate-500 font-sans uppercase font-bold shrink-0">
+                    <span className="text-xs text-slate-500 font-sans uppercase font-black tracking-widest bg-slate-800/50 px-2 py-1 rounded">
                       {isForeignToVes
                         ? "Bs"
                         : activeRate === "euro"
@@ -968,32 +975,32 @@ export default function CurrencyApp() {
 
               <Link
                 href="/analisis"
-                className="group flex items-center gap-4 p-4 mt-8 bg-slate-900/50 hover:bg-emerald-500/10 border border-slate-700 hover:border-emerald-500/50 rounded-2xl transition-all duration-300"
+                className="group flex items-center gap-4 p-5 mt-10 bg-slate-900/40 hover:bg-blue-500/10 border border-white/5 hover:border-blue-500/30 rounded-[2rem] transition-all duration-500 shadow-xl"
               >
-                <div className="p-3 bg-slate-800 group-hover:bg-emerald-600 rounded-xl transition-colors">
-                  <ChartBarIcon className="w-5 h-5 text-emerald-400 group-hover:text-white" />
+                <div className="p-3.5 bg-slate-800 group-hover:bg-blue-600 rounded-2xl transition-all duration-500 shadow-lg group-hover:shadow-blue-500/20">
+                  <ChartBarIcon className="w-6 h-6 text-blue-400 group-hover:text-white" />
                 </div>
-                <div className="text-left">
-                  <p className="text-xs font-black uppercase tracking-widest text-white">
+                <div className="text-left flex-1">
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white group-hover:text-blue-400 transition-colors">
                     Análisis Diferencial
                   </p>
-                  <p className="text-[9px] text-slate-500 uppercase mt-0.5 font-bold tracking-wider">
-                    Análisis de estados de cuenta
+                  <p className="text-[9px] text-slate-500 uppercase mt-1 font-bold tracking-wider leading-relaxed">
+                    Conciliación inteligente de estados de cuenta
                   </p>
                 </div>
               </Link>
             </div>
           </div>
         ) : (
-          <div className="animate-in fade-in duration-300">
-            <h2 className="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">
-              <CalendarDaysIcon className="h-5 w-5" /> Histórico Oficial BCV
+          <div className="animate-in fade-in duration-500">
+            <h2 className="text-xl font-black emerald-gradient-text mb-6 flex items-center gap-3 tracking-tight uppercase">
+              <CalendarDaysIcon className="h-6 w-6 text-emerald-500" /> Histórico Oficial BCV
             </h2>
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-3 mb-6">
               <select
                 value={histMonth}
                 onChange={(e) => setHistMonth(parseInt(e.target.value))}
-                className="bg-[#0f172a] text-white p-2 rounded-lg border border-[#334155] text-sm flex-1 outline-none cursor-pointer"
+                className="bg-slate-900/60 text-white p-3 rounded-xl border border-white/5 text-sm flex-1 outline-none cursor-pointer focus:border-emerald-500/50 transition-all font-bold uppercase tracking-widest"
               >
                 {[
                   "Enero",
@@ -1017,7 +1024,7 @@ export default function CurrencyApp() {
               <select
                 value={histYear}
                 onChange={(e) => setHistYear(parseInt(e.target.value))}
-                className="bg-[#0f172a] text-white p-2 rounded-lg border border-[#334155] text-sm w-32 outline-none cursor-pointer"
+                className="bg-slate-900/60 text-white p-3 rounded-xl border border-white/5 text-sm w-36 outline-none cursor-pointer focus:border-emerald-500/50 transition-all font-bold uppercase tracking-widest"
               >
                 {yearsRange.map((y) => (
                   <option key={y} value={y}>
@@ -1037,16 +1044,16 @@ export default function CurrencyApp() {
                 <div ref={chartRef} className="mb-4 bg-transparent pt-2">
                   <HistoryChart data={histData} />
                 </div>
-                <div className="overflow-y-auto max-h-[180px] mb-6 scrollbar-hide pr-2 rounded-xl border border-[#334155]">
+                <div className="overflow-y-auto max-h-[220px] mb-8 scrollbar-hide pr-1 rounded-2xl border border-white/5 bg-slate-900/20 shadow-inner">
                   <table className="w-full text-sm text-left border-collapse">
-                    <thead className="text-[10px] text-slate-500 uppercase bg-[#1e293b] sticky top-0 z-20">
+                    <thead className="text-[10px] text-slate-500 uppercase bg-slate-800/80 sticky top-0 z-20">
                       <tr>
-                        <th className="px-3 py-3">Fecha</th>
-                        <th className="px-3 py-3 text-right">USD</th>
-                        <th className="px-3 py-3 text-right">EUR</th>
+                        <th className="px-4 py-4 font-black tracking-widest">Fecha</th>
+                        <th className="px-4 py-4 text-right font-black tracking-widest">USD ($)</th>
+                        <th className="px-4 py-4 text-right font-black tracking-widest">EUR (€)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800">
+                    <tbody className="divide-y divide-white/5">
                       {histData.map((row, idx) => (
                         <tr
                           key={idx}
@@ -1070,31 +1077,31 @@ export default function CurrencyApp() {
                     </tbody>
                   </table>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={exportToExcel}
-                    className="flex flex-col items-center p-2 bg-[#0f172a] rounded-lg border border-[#334155] hover:bg-slate-800 transition-all group"
+                    className="flex flex-col items-center p-3 bg-slate-900/40 rounded-2xl border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all group active:scale-90"
                   >
-                    <ArrowDownTrayIcon className="h-5 w-5 text-emerald-500 mb-1" />
-                    <span className="text-[9px] font-bold uppercase text-slate-400">
+                    <ArrowDownTrayIcon className="h-6 w-6 text-emerald-500 mb-1.5 transition-transform group-hover:-translate-y-1" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-emerald-400">
                       Excel
                     </span>
                   </button>
                   <button
                     onClick={exportToPDF}
-                    className="flex flex-col items-center p-2 bg-[#0f172a] rounded-lg border border-[#334155] hover:bg-slate-800 transition-all group"
+                    className="flex flex-col items-center p-3 bg-slate-900/40 rounded-2xl border border-white/5 hover:bg-red-500/10 hover:border-red-500/30 transition-all group active:scale-90"
                   >
-                    <DocumentTextIcon className="h-5 w-5 text-red-500 mb-1" />
-                    <span className="text-[9px] font-bold uppercase text-slate-400">
+                    <DocumentTextIcon className="h-6 w-6 text-red-500 mb-1.5 transition-transform group-hover:-translate-y-1" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-red-400">
                       PDF
                     </span>
                   </button>
                   <button
                     onClick={copyToClipboard}
-                    className="flex flex-col items-center p-2 bg-[#0f172a] rounded-lg border border-[#334155] hover:bg-slate-800 transition-all group"
+                    className="flex flex-col items-center p-3 bg-slate-900/40 rounded-2xl border border-white/5 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all group active:scale-90"
                   >
-                    <ClipboardDocumentIcon className="h-5 w-5 text-blue-500 mb-1" />
-                    <span className="text-[9px] font-bold uppercase text-slate-400">
+                    <ClipboardDocumentIcon className="h-6 w-6 text-blue-500 mb-1.5 transition-transform group-hover:-translate-y-1" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-blue-400">
                       Copiar
                     </span>
                   </button>
