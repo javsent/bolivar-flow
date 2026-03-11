@@ -93,12 +93,14 @@ export default function CurrencyApp() {
 
   // --- FUNCIÓN PARA RESETEAR A HOY (LIVE) ---
   const resetToToday = () => {
+    // Forzamos el uso de la fecha local del sistema (Venezuela/Local)
     const now = new Date();
-    // Obtener componentes locales para evitar el salto de fecha UTC (+8pm VET)
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
-    setSelectedDate(`${year}-${month}-${day}`);
+    const todayStr = `${year}-${month}-${day}`;
+    
+    setSelectedDate(todayStr);
     fetchCurrentRates();
   };
 
@@ -891,7 +893,21 @@ export default function CurrencyApp() {
                     type="date"
                     value={selectedDate}
                     onChange={handleDateChange}
-                    max={new Date().toLocaleDateString("en-CA")} // Formato YYYY-MM-DD local
+                    max={(() => {
+                      const now = new Date();
+                      const year = now.getFullYear();
+                      const month = String(now.getMonth() + 1).padStart(2, "0");
+                      const day = String(now.getDate()).padStart(2, "0");
+                      const todayLocal = `${year}-${month}-${day}`;
+
+                      // Si la tasa oficial ya tiene una fecha (ej: mañana), permitimos seleccionarla
+                      if (rates.fecha) {
+                        const [d, m, y] = rates.fecha.split("/");
+                        const rateDate = `${y}-${m}-${d}`;
+                        return rateDate > todayLocal ? rateDate : todayLocal;
+                      }
+                      return todayLocal;
+                    })()}
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                     style={{ fontSize: "16px" }}
                   />
