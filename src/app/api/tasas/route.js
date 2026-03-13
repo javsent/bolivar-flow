@@ -9,7 +9,6 @@ export async function GET() {
     let rates = {
       bcv: 0,
       euro: 0,
-      paralelo: 0,
       binance: 0,
       fecha: "" // Nueva propiedad para la fecha valor oficial
     };
@@ -101,22 +100,19 @@ export async function GET() {
       }
     };
 
-    const [precioParalelo, precioBinance] = await Promise.all([
-      scrapeExchangeMonitor('https://exchangemonitor.net/venezuela/monitor-dolar', 'Paralelo'),
+    const [precioBinance] = await Promise.all([
       scrapeExchangeMonitor('https://exchangemonitor.net/venezuela/dolar-binance', 'Binance')
     ]);
 
-    if (precioParalelo > 0) rates.paralelo = precioParalelo;
     if (precioBinance > 0) rates.binance = precioBinance;
 
     // ==========================================
     // 3. RESPALDO (SOLO SI FALLA SCRAPING)
     // ==========================================
-    if (rates.paralelo === 0 || rates.binance === 0) {
+    if (rates.binance === 0) {
       try {
         const { data: dataApi } = await axios.get('https://ve.dolarapi.com/v1/dolares', { timeout: 5000 });
         const promedio = dataApi.find(d => d.fuente === 'paralelo')?.promedio || 0;
-        if (rates.paralelo === 0) rates.paralelo = promedio;
         if (rates.binance === 0) rates.binance = promedio;
       } catch (e) { }
     }

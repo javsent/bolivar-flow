@@ -144,7 +144,8 @@ export async function GET(request) {
                       fecha: fechaOficial,
                       usd: usdHome,
                       euro: eurHome,
-                      isWeekend: false
+                      isWeekend: false,
+                      source: "HTML"
                     });
                     fastInjectSuccess = true;
                     console.log(`⚡ Fast Inject (HTML): ${fechaOficial}`);
@@ -153,11 +154,11 @@ export async function GET(request) {
                     fastInjectSuccess = false; // Force XLSX fallback to recover missing official days
 
                     // Almacenamos la fecha HTML como rescate por si el XLSX aún no ha sido actualizado
-                    fallbackHtmlDate = { fecha: fechaOficial, usd: usdHome, euro: eurHome, isWeekend: false };
+                    fallbackHtmlDate = { fecha: fechaOficial, usd: usdHome, euro: eurHome, isWeekend: false, source: "HTML" };
                   }
                 } else {
                   // Si no hay datos del todo (ni este mes ni el anterior), inyectamos igual
-                  datesFound.push({ fecha: fechaOficial, usd: usdHome, euro: eurHome, isWeekend: false });
+                  datesFound.push({ fecha: fechaOficial, usd: usdHome, euro: eurHome, isWeekend: false, source: "HTML" });
                   fastInjectSuccess = true;
                 }
               } else {
@@ -220,7 +221,8 @@ export async function GET(request) {
                         fecha: fechaOficial,
                         usd: parseFloat(usdVal),
                         euro: parseFloat(eurVal),
-                        isWeekend: false
+                        isWeekend: false,
+                        source: "XLSX"
                       });
                     }
                   }
@@ -253,11 +255,14 @@ export async function GET(request) {
         if (index === -1) {
           requestedMonthData.push(entry);
           changed = true;
-        } else if (requestedMonthData[index].isWeekend === true) {
-          // SOBREESCRIBIR SI ES UN PLACEHOLDER DE FIN DE SEMANA/CERRADO
-          requestedMonthData[index] = entry;
-          changed = true;
-          console.log(`♻️ Refreshed Placeholder with Official Rate: ${entry.fecha}`);
+        } else {
+          const existing = requestedMonthData[index];
+          if (existing.isWeekend === true || entry.source === 'XLSX' || (entry.source === 'HTML' && entry.usd !== existing.usd && !existing.isWeekend)) {
+            // SOBREESCRIBIR SI ES FIN DE SEMANA O SI ES UNA CORRECCIÓN REAL
+            requestedMonthData[index] = { ...existing, usd: entry.usd, euro: entry.euro, isWeekend: entry.isWeekend };
+            changed = true;
+            console.log(`♻️ Refreshed Rate Data for: ${entry.fecha}`);
+          }
         }
       }
 

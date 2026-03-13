@@ -1,6 +1,19 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+ 
+## [2026-03-13] - Remoción de Paralelo y Fix de Fechas/Sobrescritura
+### Added
+- **Identificación de Origen de Datos**: La API ahora rastrea si un dato proviene de `HTML` (Fast Inject) o `XLSX` (Oficial), permitiendo correcciones automáticas.
+
+### Changed
+- **Eliminación de Paralelo**: Se eliminó quirúrgicamente la tasa "Paralelo" de toda la aplicación (Frontend y Scrapers) por motivos legales y de simplicidad, dejando únicamente BCV y Binance.
+- **Layout de Selector de Tasas**: Ajuste del grid de la calculadora a 3 columnas para un diseño más limpio tras la salida de Paralelo.
+
+### Fixed
+- **Bug de Formato de Fecha (Calculator)**: Se estandarizó la generación de strings de fecha usando `padStart(2, '0')`, arreglando el error que impedía mostrar tasas en días con un solo dígito (como el 12 de marzo).
+- **Bloqueo de Sobrescritura en Histórico**: Se corrigió un bug donde un scraping de HTML prematuro bloqueaba permanentemente la inyección de la tasa oficial del Excel (XLSX). Ahora, el sistema permite que los datos oficiales corrijan cualquier discrepancia del scraping rápido.
+- **Corrección de Datos Históricos (11/12 de Marzo)**: Se recalcularon y sanearon las tasas de la segunda semana de marzo que presentaban errores por la lógica de bloqueo anterior.
 
 ## [2026-03-09] - Fix Degradación Grácil en Fin de Semana
 ### Fixed

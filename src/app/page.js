@@ -48,7 +48,6 @@ export default function CurrencyApp() {
     bcv: 0,
     euro: 0,
     binance: 0,
-    paralelo: 0,
   });
   const [activeRate, setActiveRate] = useState("bcv");
   const [selectedDate, setSelectedDate] = useState("");
@@ -64,7 +63,6 @@ export default function CurrencyApp() {
     bcv: "BCV $",
     euro: "BCV €",
     binance: "Binance",
-    paralelo: "Paralelo",
   };
   const currentYear = new Date().getFullYear();
   const yearsRange = Array.from(
@@ -150,11 +148,9 @@ export default function CurrencyApp() {
         }
       }
 
-      const dateStr = searchDate.toLocaleDateString("es-ES", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+      const dStr = String(searchDate.getDate()).padStart(2, "0");
+      const mStr = String(searchDate.getMonth() + 1).padStart(2, "0");
+      const dateStr = `${dStr}/${mStr}/${searchDate.getFullYear()}`;
       const match = historicoCache.current[cacheKey].find(
         (d) => d.fecha === dateStr,
       );
@@ -180,11 +176,14 @@ export default function CurrencyApp() {
       // Priorizar datos en vivo del scraper si están disponibles
       if (data.bcv > 0) {
         setRates(data);
-        setDisplayDate(data.fecha || new Date().toLocaleDateString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }));
+        if (data.fecha) {
+            setDisplayDate(data.fecha);
+        } else {
+            const now = new Date();
+            const fd = String(now.getDate()).padStart(2, "0");
+            const fm = String(now.getMonth() + 1).padStart(2, "0");
+            setDisplayDate(`${fd}/${fm}/${now.getFullYear()}`);
+        }
       } else {
         // Fallback al histórico solo si el scraper falla
         const today = new Date();
@@ -199,11 +198,9 @@ export default function CurrencyApp() {
           setDisplayDate(tasaVigente.fecha);
         } else {
           setRates(data);
-          setDisplayDate(today.toLocaleDateString("es-ES", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }));
+          const fd = String(today.getDate()).padStart(2, "0");
+          const fm = String(today.getMonth() + 1).padStart(2, "0");
+          setDisplayDate(`${fd}/${fm}/${today.getFullYear()}`);
         }
       }
 
@@ -219,7 +216,7 @@ export default function CurrencyApp() {
   const handleDateChange = async (e) => {
     const newDate = e.target.value;
     if (!newDate) return;
-    if (activeRate === "paralelo" || activeRate === "binance") {
+    if (activeRate === "binance") {
       showToast("Historial solo disponible para tasas oficiales");
       return;
     }
@@ -234,13 +231,10 @@ export default function CurrencyApp() {
         setIsHistoricalRate(true);
 
         // CORRECCIÓN: Mostramos la fecha que el usuario seleccionó, no la de la tasa hallada
-        const selectedDateFormatted = new Date(
-          newDate + "T12:00:00",
-        ).toLocaleDateString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        });
+        const selDateObj = new Date(newDate + "T12:00:00");
+        const selDay = String(selDateObj.getDate()).padStart(2, "0");
+        const selMonth = String(selDateObj.getMonth() + 1).padStart(2, "0");
+        const selectedDateFormatted = `${selDay}/${selMonth}/${selDateObj.getFullYear()}`;
         setDisplayDate(selectedDateFormatted);
 
         if (dayData.fecha !== selectedDateFormatted) {
@@ -292,11 +286,9 @@ export default function CurrencyApp() {
 
       for (let day = 1; day <= stopDay; day++) {
         const currentSearchDate = new Date(histYear, histMonth - 1, day);
-        const dayStr = currentSearchDate.toLocaleDateString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        });
+        const loopDay = String(currentSearchDate.getDate()).padStart(2, "0");
+        const loopMonth = String(currentSearchDate.getMonth() + 1).padStart(2, "0");
+        const dayStr = `${loopDay}/${loopMonth}/${currentSearchDate.getFullYear()}`;
 
         const entry = rawData.find((d) => d.fecha === dayStr);
 
@@ -861,8 +853,8 @@ export default function CurrencyApp() {
             </div>
 
             <div className="flex items-center gap-2 mb-6">
-              <div className="flex-1 grid grid-cols-4 gap-1 bg-[#0f172a] p-1 rounded-xl">
-                {["bcv", "euro", "binance", "paralelo"].map((key) => (
+              <div className="flex-1 grid grid-cols-3 gap-1 bg-[#0f172a] p-1 rounded-xl">
+                {["bcv", "euro", "binance"].map((key) => (
                   <button
                     key={key}
                     onClick={() => {
