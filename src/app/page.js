@@ -169,25 +169,39 @@ export default function CurrencyApp() {
     setLoading(true);
     historicoCache.current = {};
     try {
+      // 0. OBTENER FECHA DE HOY (SISTEMA)
+      const now = new Date();
+      const fd = String(now.getDate()).padStart(2, "0");
+      const fm = String(now.getMonth() + 1).padStart(2, "0");
+      const todayStr = `${fd}/${fm}/${now.getFullYear()}`;
+
+      // 1. INTENTAR BUSCAR SI YA EXISTE TASA DE HOY EN HISTORIAL
+      let tasaHoy = await findValidRateBackwards(now, 1, false);
+
       const res = await fetch("/api/tasas");
       if (!res.ok) throw new Error("Falló API");
       const data = await res.json();
 
-      // Priorizar datos en vivo del scraper si están disponibles
-      if (data.bcv > 0) {
+      if (tasaHoy && tasaHoy.fecha === todayStr) {
+        // Caso: Ya tenemos la tasa de hoy guardada (ej: vía manual o XLSX adelantado)
+        setRates({
+          ...data,
+          bcv: tasaHoy.usd,
+          euro: tasaHoy.euro
+        });
+        setDisplayDate(todayStr);
+      } else if (data.bcv > 0) {
+        // Caso: El scraper respondió con datos vivos
         setRates(data);
-        if (data.fecha) {
-            setDisplayDate(data.fecha);
-        } else {
-            const now = new Date();
-            const fd = String(now.getDate()).padStart(2, "0");
-            const fm = String(now.getMonth() + 1).padStart(2, "0");
-            setDisplayDate(`${fd}/${fm}/${now.getFullYear()}`);
+        setDisplayDate(todayStr); // Forzamos visualmente a "Hoy"
+
+        // Notificar al usuario si la tasa técnica que reporta el BCV es de otro día
+        if (data.fecha && data.fecha !== todayStr) {
+          showToast(`Tasa oficial del ${data.fecha}`);
         }
       } else {
-        // Fallback al histórico solo si el scraper falla
-        const today = new Date();
-        let tasaVigente = await findValidRateBackwards(today, 7, false);
+        // Fallback: Si el scraper falla, buscamos la última tasa vigente hacia atrás
+        let tasaVigente = await findValidRateBackwards(now, 7, false);
 
         if (tasaVigente) {
           setRates({
@@ -195,12 +209,13 @@ export default function CurrencyApp() {
             bcv: tasaVigente.usd,
             euro: tasaVigente.euro,
           });
-          setDisplayDate(tasaVigente.fecha);
+          setDisplayDate(todayStr);
+          if (tasaVigente.fecha !== todayStr) {
+            showToast(`Tasa del día ${tasaVigente.fecha}`);
+          }
         } else {
           setRates(data);
-          const fd = String(today.getDate()).padStart(2, "0");
-          const fm = String(today.getMonth() + 1).padStart(2, "0");
-          setDisplayDate(`${fd}/${fm}/${today.getFullYear()}`);
+          setDisplayDate(todayStr);
         }
       }
 

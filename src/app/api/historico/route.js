@@ -237,7 +237,38 @@ export async function GET(request) {
           console.error("⚠️ Falló descarga índice XLSX Fallback.", e.message);
         }
 
-        // --- 2.5 RESCATE DE TASA HTML (GRACEFUL DEGRADATION) ---
+        // --- 2.5 FALLBACK EXTRA: EXCHANGE MONITOR (SI BCV ESTÁ TOTALMENTE CAÍDO O DESACTUALIZADO) ---
+        if (datesFound.length === 0 || !datesFound.some(d => d.fecha === `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`)) {
+           console.log("🕵️ Intentando rescate vía Exchange Monitor (Oficial)...");
+           try {
+              const nowVET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Caracas" }));
+              const todayDisplay = `${String(nowVET.getDate()).padStart(2, '0')}/${String(nowVET.getMonth() + 1).padStart(2, '0')}/${nowVET.getFullYear()}`;
+              
+              const { data: htmlEM } = await axios.get('https://exchangemonitor.net/venezuela/dolar-bcv', { 
+                headers: { 'User-Agent': 'Mozilla/5.0' }, 
+                timeout: 5000 
+              });
+              const $em = cheerio.load(htmlEM);
+              const metaDesc = $em('meta[name="description"]').attr('content') || $em('meta[property="og:description"]').attr('content') || "";
+              
+              const match = metaDesc.match(/(?:es de|en|cotiza\sen)\s*([\d,.]+)/i) || metaDesc.match(/(\d{2,},\d{2})/);
+              if (match) {
+                 const usd = parseFloat(match[1].replace(',', '.'));
+                 if (usd > 0) {
+                    console.log(`✅ Rescate EM OK: ${usd} para ${todayDisplay}`);
+                    datesFound.push({
+                       fecha: todayDisplay,
+                       usd: usd,
+                       euro: usd * 1.146, // Proporción aproximada si falla el rescate (aprox 512/446.8)
+                       isWeekend: false,
+                       source: "EM-Rescue"
+                    });
+                 }
+              }
+           } catch(e) { console.warn("⚠️ Falló rescate EM en histórico"); }
+        }
+
+        // --- 2.6 RESCATE DE TASA HTML (GRACEFUL DEGRADATION) ---
         // Si forzamos el XLSX porque faltaban días, pero el XLSX del BCV estaba desactualizado (o falló red)
         // y nos retornó CERO fechas nuevas para el mes actual, debemos rescatar la tasa del viernes (HTML).
         // Si no lo hacemos, datesFound = 0, fill-forward se salta, y el array queda vacío arruinando el calendario.
@@ -250,6 +281,25 @@ export async function GET(request) {
       }
 
       // --- PROCESAR INYECCIÓN Y FILL-FORWARD ---
+      let forceFillForward = false;
+
+      // DETECCIÓN DE HUECOS CRONOLÓGICOS (Ej: Saltamos del Viernes 13 al Lunes 16 sin pasar por 14 y 15)
+      // Si hoy es Lunes y no tenemos Sábado/Domingo en el array, debemos forzar el rellenado.
+      if (requestedMonthData.length > 0) {
+        const lastInArray = requestedMonthData[0]; // Está ordenado desc
+        const [d, m, y] = lastInArray.fecha.split('/');
+        const lastDateInArray = new Date(y, m - 1, d, 12, 0, 0, 0);
+        
+        const nowVET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Caracas" }));
+        const todayVET = new Date(nowVET.getFullYear(), nowVET.getMonth(), nowVET.getDate(), 12, 0, 0, 0);
+        
+        const diff = Math.round((todayVET - lastDateInArray) / (1000 * 60 * 60 * 24));
+        if (diff > 0) {
+          console.log(`📅 Detectado hueco de ${diff} días entre última fecha (${lastInArray.fecha}) y hoy.`);
+          forceFillForward = true;
+        }
+      }
+
       for (const entry of datesFound) {
         const index = requestedMonthData.findIndex(d => d.fecha === entry.fecha);
         if (index === -1) {
@@ -266,7 +316,7 @@ export async function GET(request) {
         }
       }
 
-      if (changed) {
+      if (changed || forceFillForward) {
         requestedMonthData.sort((a, b) => {
           const [da, ma, ya] = a.fecha.split('/');
           const [db, mb, yb] = b.fecha.split('/');

@@ -65,8 +65,90 @@ export async function GET() {
       console.error("❌ Error BCV:", e.message);
     }
 
+    // 0. OBTENER FECHA DE HOY (SISTEMA)
+    const now = new Date();
+    const fd = String(now.getDate()).padStart(2, '0');
+    const fm = String(now.getMonth() + 1).padStart(2, '0');
+    const todayStr = `${fd}/${fm}/${now.getFullYear()}`;
+
     // ==========================================
-    // 2. EXCHANGE MONITOR (PARALELO Y BINANCE)
+    // 2. FALLBACK: EXCHANGE MONITOR (OFICIAL BCV)
+    // ==========================================
+    if (rates.bcv === 0 || rates.euro === 0 || rates.fecha !== todayStr) {
+      console.log(`🔍 Intentando fallback con Exchange Monitor (Oficial)... [Motivo: ${rates.fecha !== todayStr ? "Fecha desactualizada" : "Tasa en 0"}]`);
+      try {
+        const { data: htmlEM } = await axios.get('https://exchangemonitor.net/venezuela/dolar-bcv', { headers, timeout: 8000 });
+        const $em = cheerio.load(htmlEM);
+        
+        // 1. Intentar extraer del input de la calculadora (más preciso si está en el HTML)
+        const emUSD_input = parseFloat($em('#input-amount-to').val()?.replace(',', '.') || '0');
+        
+        // 2. Extraer de la Meta Description o Title (Muy fiable en Exchange Monitor)
+        const metaDesc = $em('meta[name="description"]').attr('content') || "";
+        const ogDesc = $em('meta[property="og:description"]').attr('content') || "";
+        const pageTitle = $em('title').text() || "";
+        
+        const extractFromText = (text) => {
+           if (!text) return 0;
+           // Busca patrones como "446,80", "446.80", "es de 446,80", etc.
+           // Primero intentamos con el prefijo "de " o "en " que es muy común en EM
+           const preciseMatch = text.match(/(?:es de|en|en\sBs\.|cotiza\sen)\s*([\d,.]+)/i);
+           if (preciseMatch) return parseFloat(preciseMatch[1].replace(',', '.')) || 0;
+
+           // Fallback a cualquier número con formato de moneda (ej: 446,80)
+           const generalMatch = text.match(/(\d{2,},\d{2})/);
+           if (generalMatch) return parseFloat(generalMatch[1].replace(',', '.')) || 0;
+           
+           return 0;
+        };
+
+        let emUSD = emUSD_input;
+        if (emUSD === 0) emUSD = extractFromText(metaDesc);
+        if (emUSD === 0) emUSD = extractFromText(ogDesc);
+        if (emUSD === 0) emUSD = extractFromText(pageTitle);
+
+        if (emUSD > 0) {
+          rates.bcv = emUSD;
+          // Buscar Euro en la página
+          $em('div, span, p, td, a').each((i, el) => {
+             const txt = $em(el).text().toUpperCase();
+             if (txt.includes('EURO') && (txt.includes('BS.') || txt.includes('VES'))) {
+                const val = extractFromText($em(el).text());
+                if (val > 0 && val > emUSD * 0.9) rates.euro = val; 
+             }
+          });
+        }
+
+        // 3. Si falla el euro, probar página específica
+        if (rates.euro === 0 || rates.euro < rates.bcv) {
+          try {
+             console.log("🔍 Consultando página específica de Euro BCV para precisión...");
+             const { data: htmlEM_EUR } = await axios.get('https://exchangemonitor.net/venezuela/euro-bcv', { headers, timeout: 5000 });
+             const $eur = cheerio.load(htmlEM_EUR);
+             
+             // Extraer del input (más preciso)
+             const eurVal_input = parseFloat($eur('#input-amount-to').val()?.replace(',', '.') || '0');
+             
+             // Extraer de meta tags
+             const metaEur = $eur('meta[name="description"]').attr('content') || $eur('meta[property="og:description"]').attr('content') || "";
+             const eurVal_meta = extractFromText(metaEur);
+             
+             const eurFinal = eurVal_input > 0 ? eurVal_input : eurVal_meta;
+             if (eurFinal > 0) rates.euro = eurFinal;
+          } catch(e) { console.warn("⚠️ Falló scraping Euro EM"); }
+        }
+
+        if (rates.bcv > 0) {
+           console.log(`✅ Fallback EM OK: USD=${rates.bcv}, EUR=${rates.euro}`);
+           rates.fecha = todayStr; // Garantizamos que la fecha sea hoy ya que EM está al día
+        }
+      } catch (e) {
+        console.error("❌ Error Fallback EM:", e.message);
+      }
+    }
+
+    // ==========================================
+    // 3. EXCHANGE MONITOR (PARALELO Y BINANCE)
     // ==========================================
     const scrapeExchangeMonitor = async (url, label) => {
       try {
@@ -107,7 +189,7 @@ export async function GET() {
     if (precioBinance > 0) rates.binance = precioBinance;
 
     // ==========================================
-    // 3. RESPALDO (SOLO SI FALLA SCRAPING)
+    // 4. RESPALDO FINAL (SOLO SI FALLA TODO)
     // ==========================================
     if (rates.binance === 0) {
       try {
