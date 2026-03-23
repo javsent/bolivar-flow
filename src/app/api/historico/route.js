@@ -38,14 +38,20 @@ export async function GET(request) {
     let requestedMonthData = yearData[mes] || [];
     const now = new Date();
 
+    const forceXlsx = searchParams.get('forceXlsx') === 'true';
+
     // SOLO INTENTAR SINCRONIZAR SI ES EL MES/AÑO ACTUAL Y NO ESTÁ DESHABILITADO
     if (anio === now.getFullYear() && mes === (now.getMonth() + 1) && !disableSync) {
+      if (forceXlsx) {
+        // En auto-saneamiento, purgamos datos rellenados anteriormente (sin 'source') 
+        // para que la rutina fill-forward vuelva a heredar las tasas oficiales correctamente.
+        requestedMonthData = requestedMonthData.filter(d => Boolean(d.source));
+      }
+
       let fastInjectSuccess = false;
       let datesFound = [];
       let changed = false;
       let fallbackHtmlDate = null; // Guardará la tasa HTML si el BCV tarda en subir el Excel
-
-      const forceXlsx = searchParams.get('forceXlsx') === 'true';
 
       // --- 1. INTENTO RÁPIDO (HTML FRONT-PAGE) ---
       if (forceXlsx) {

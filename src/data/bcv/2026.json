@@ -375,25 +375,28 @@
       "fecha": "20/03/2026",
       "usd": 455.2547,
       "euro": 524.50804496,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "19/03/2026",
-      "usd": 446.8,
-      "euro": 509.352,
+      "usd": 451.5072,
+      "euro": 520.64198246,
       "isWeekend": false
     },
     {
       "fecha": "18/03/2026",
       "usd": 451.5072,
       "euro": 520.64198246,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "17/03/2026",
       "usd": 448.3686,
       "euro": 514.97823921,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "16/03/2026",
@@ -439,13 +442,15 @@
       "fecha": "10/03/2026",
       "usd": 436.2419,
       "euro": 505.41677808,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "09/03/2026",
       "usd": 433.1664,
       "euro": 501.72797779,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "08/03/2026",
@@ -463,31 +468,36 @@
       "fecha": "06/03/2026",
       "usd": 431.0113,
       "euro": 499.61536862,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "05/03/2026",
       "usd": 427.9302,
       "euro": 497.42178517,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "04/03/2026",
       "usd": 425.6741,
       "euro": 491.49182934,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "03/03/2026",
       "usd": 421.8772,
       "euro": 493.53726119,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "02/03/2026",
       "usd": 419.9873,
       "euro": 495.60601336,
-      "isWeekend": false
+      "isWeekend": false,
+      "source": "XLSX"
     },
     {
       "fecha": "01/03/2026",
