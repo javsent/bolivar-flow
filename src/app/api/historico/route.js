@@ -392,37 +392,44 @@ export async function GET(request) {
           const yearStr = current.getFullYear();
           const display = `${dayStr}/${monthStr}/${yearStr}`;
 
+          const currentDow = current.getDay();
+          const isActualWeekendDay = (currentDow === 0 || currentDow === 6);
+
           if (existingMap[display]) {
+            // FIX: Ensure 'isWeekend' is strictly true only on actual weekends.
+            // If the BCV is delayed, weekdays get gap-filled. We don't want to mark 
+            // them as strictly "closed" so they stay selectable on the calendar.
+            existingMap[display].isWeekend = isActualWeekendDay;
+
             if (!existingMap[display].isWeekend) {
               lastKnown = existingMap[display];
               filledData.push(lastKnown);
             } else {
-              // Si ya existe como fin de semana/feriado
+              // Si ya existe como fin de semana real
               if (lastKnown) {
                 // Lo actualizamos con la tasa real más reciente de este mes
                 filledData.push({
                   fecha: display,
                   usd: lastKnown.usd,
                   euro: lastKnown.euro,
-                  isWeekend: true
+                  isWeekend: isActualWeekendDay
                 });
               } else {
-                // Al principio del mes, lastKnown es nulo. Mantenemos el marcador heredado del mes anterior.
-                filledData.push(existingMap[display]);
+                // Al principio del mes, lastKnown es nulo
+                filledData.push({
+                  ...existingMap[display],
+                  isWeekend: isActualWeekendDay
+                });
               }
             }
           } else if (lastKnown) {
-            // Ensure we accurately record Sat/Sun vs missing weekday (Feriado)
-            const currentDow = current.getDay();
-            const isActualWeekendDay = (currentDow === 0 || currentDow === 6);
-
+            // Hueco cronológico llenado con el último valor conocido.
+            // Si es entre semana, hereda el valor y sigue siendo isWeekend: false.
             filledData.push({
               fecha: display,
               usd: lastKnown.usd,
               euro: lastKnown.euro,
-              // Si es un hueco en día de semana, igual lo tratamos como cerrado/feriado, 
-              // pero estructuralmente sabemos por qué es
-              isWeekend: true
+              isWeekend: isActualWeekendDay
             });
           }
           current.setDate(current.getDate() + 1);
