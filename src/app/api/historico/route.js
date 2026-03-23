@@ -190,7 +190,7 @@ export async function GET(request) {
           const $smc = cheerio.load(htmlSMC);
 
           let links = [];
-          $smc('a[href*="_smc.xls"]').each((i, el) => {
+          $smc('a[href*="_smc"]').each((i, el) => {
             const href = $smc(el).attr('href');
             const fullLink = href.startsWith('http') ? href : DOMAIN + href;
             if (!links.includes(fullLink)) links.push(fullLink);
