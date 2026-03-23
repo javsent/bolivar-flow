@@ -353,6 +353,49 @@
   ],
   "3": [
     {
+      "fecha": "23/03/2026",
+      "usd": 457.08,
+      "euro": 523.81368,
+      "isWeekend": false,
+      "source": "EM-Rescue"
+    },
+    {
+      "fecha": "22/03/2026",
+      "usd": 446.8,
+      "euro": 509.352,
+      "isWeekend": true
+    },
+    {
+      "fecha": "21/03/2026",
+      "usd": 446.8,
+      "euro": 509.352,
+      "isWeekend": true
+    },
+    {
+      "fecha": "20/03/2026",
+      "usd": 446.8,
+      "euro": 509.352,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/03/2026",
+      "usd": 446.8,
+      "euro": 509.352,
+      "isWeekend": false
+    },
+    {
+      "fecha": "18/03/2026",
+      "usd": 446.8,
+      "euro": 509.352,
+      "isWeekend": false
+    },
+    {
+      "fecha": "17/03/2026",
+      "usd": 446.8,
+      "euro": 509.352,
+      "isWeekend": false
+    },
+    {
       "fecha": "16/03/2026",
       "usd": 446.8,
       "euro": 509.352,

@@ -1,6 +1,6 @@
 const http = require('http');
 
-http.get('http://localhost:3000/api/historico?mes=3&anio=2026', (res) => {
+http.get('http://localhost:3000/api/historico?mes=3&anio=2026&forceXlsx=true', (res) => {
   let data = '';
   res.on('data', chunk => { data += chunk; });
   res.on('end', () => {

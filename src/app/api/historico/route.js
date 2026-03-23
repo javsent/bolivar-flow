@@ -20,7 +20,6 @@ export async function GET(request) {
     const mes = parseInt(searchParams.get('mes'));
     const anio = parseInt(searchParams.get('anio'));
     const disableSync = searchParams.get('sync') === 'false';
-    const forceXlsx = searchParams.get('forceXlsx') === 'true';
 
     const dataPath = path.join(process.cwd(), 'src', 'data', 'bcv', `${anio}.json`);
     let yearData = {};
@@ -46,10 +45,14 @@ export async function GET(request) {
       let changed = false;
       let fallbackHtmlDate = null; // Guardará la tasa HTML si el BCV tarda en subir el Excel
 
+      const forceXlsx = searchParams.get('forceXlsx') === 'true';
+
       // --- 1. INTENTO RÁPIDO (HTML FRONT-PAGE) ---
       if (forceXlsx) {
         console.log("🛠️ Modo Auto-Saneamiento: Saltando inyección HTML rápida para obligar la lectura del archivo XLSX.");
-      } else {
+      }
+
+      if (!forceXlsx) {
         try {
         const { data: htmlFront } = await axios.get(DOMAIN, {
           headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -460,6 +463,7 @@ export async function GET(request) {
           console.warn("⚠️ No se pudo escribir en el disco (Vercel):", fsError.message);
         }
       }
+    }
 
     if (requestedMonthData.length === 0) {
       return NextResponse.json({ error: "No hay datos" }, { status: 404 });
