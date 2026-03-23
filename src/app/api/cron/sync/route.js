@@ -17,7 +17,7 @@ export async function GET(request) {
 
         await Promise.allSettled([
             fetch(`${baseUrl}/api/tasas`),
-            fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}`)
+            fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}&forceXlsx=true`)
         ]);
 
         return NextResponse.json({ success: true, message: 'Tasas sincronizadas exitosamente.' });
