@@ -11,13 +11,18 @@ export async function GET(request) {
         const anio = now.getFullYear();
         const mes = now.getMonth() + 1;
 
+        let prevMes = mes - 1;
+        let prevAnio = anio;
+        if (prevMes === 0) { prevMes = 12; prevAnio -= 1; }
+
         // Trigger both endpoints locally to force them to run their sync logic
         // We use absolute URLs if VERCEL_URL is present, otherwise localhost (though this runs in Vercel)
         const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
 
         await Promise.allSettled([
             fetch(`${baseUrl}/api/tasas`),
-            fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}&forceXlsx=true`)
+            fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}&forceXlsx=true`),
+            fetch(`${baseUrl}/api/historico?mes=${prevMes}&anio=${prevAnio}&forceXlsx=true`)
         ]);
 
         return NextResponse.json({ success: true, message: 'Tasas sincronizadas exitosamente.' });

@@ -353,6 +353,54 @@
   ],
   "3": [
     {
+      "fecha": "31/03/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "30/03/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "29/03/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "28/03/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "27/03/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "26/03/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "25/03/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "24/03/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
       "fecha": "23/03/2026",
       "usd": 457.0757,
       "euro": 527.7944523,
@@ -382,7 +430,7 @@
       "fecha": "19/03/2026",
       "usd": 451.5072,
       "euro": 520.64198246,
-      "isWeekend": false
+      "isWeekend": true
     },
     {
       "fecha": "18/03/2026",
@@ -503,6 +551,45 @@
       "fecha": "01/03/2026",
       "usd": 417.3579,
       "euro": 493.11253242,
+      "isWeekend": true
+    }
+  ],
+  "4": [
+    {
+      "fecha": "06/04/2026",
+      "usd": 474.0598,
+      "euro": 550.89541238,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "05/04/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "04/04/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "03/04/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "02/04/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
+      "isWeekend": true
+    },
+    {
+      "fecha": "01/04/2026",
+      "usd": 457.0757,
+      "euro": 527.7944523,
       "isWeekend": true
     }
   ]

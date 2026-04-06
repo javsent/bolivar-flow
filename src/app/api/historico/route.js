@@ -40,8 +40,9 @@ export async function GET(request) {
 
     const forceXlsx = searchParams.get('forceXlsx') === 'true';
 
-    // SOLO INTENTAR SINCRONIZAR SI ES EL MES/AÑO ACTUAL Y NO ESTÁ DESHABILITADO
-    if (anio === now.getFullYear() && mes === (now.getMonth() + 1) && !disableSync) {
+    // SOLO INTENTAR SINCRONIZAR SI ES EL MES/AÑO ACTUAL (O SI FUE FORZADO) Y NO ESTÁ DESHABILITADO
+    const isCurrentMonth = anio === now.getFullYear() && mes === (now.getMonth() + 1);
+    if ((isCurrentMonth || forceXlsx) && !disableSync) {
       if (forceXlsx) {
         // En auto-saneamiento, purgamos datos rellenados anteriormente (sin 'source') 
         // para que la rutina fill-forward vuelva a heredar las tasas oficiales correctamente.
@@ -407,7 +408,18 @@ export async function GET(request) {
           const display = `${dayStr}/${monthStr}/${yearStr}`;
 
           const currentDow = current.getDay();
-          const isActualWeekendDay = (currentDow === 0 || currentDow === 6);
+          let isActualWeekendDay = (currentDow === 0 || currentDow === 6);
+
+          if (!isActualWeekendDay && current < lastOfficialDate) {
+             const isMissingOrFilled = !existingMap[display] || !existingMap[display].source;
+             if (isMissingOrFilled) {
+                // DETECCIÓN MATEMÁTICA DE FERIADOS: No es fin de semana, pero la fecha 
+                // analizada es menor a la fecha oficial más reciente. Al no venir del banco,
+                // la deducimos matemáticamente como feriado bancario.
+                isActualWeekendDay = true;
+                console.log(`🌴 Feriado detectado matemáticamente en fill-forward: ${display}`);
+             }
+          }
 
           if (existingMap[display]) {
             // FIX: Ensure 'isWeekend' is strictly true only on actual weekends.
