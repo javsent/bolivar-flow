@@ -603,7 +603,8 @@
       "fecha": "01/04/2026",
       "usd": 473.8702,
       "euro": 542.63824342,
-      "isWeekend": true
+      "isWeekend": false,
+      "source": "Manual"
     }
   ]
 }
