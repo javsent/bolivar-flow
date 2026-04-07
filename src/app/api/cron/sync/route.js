@@ -15,17 +15,25 @@ export async function GET(request) {
         let prevAnio = anio;
         if (prevMes === 0) { prevMes = 12; prevAnio -= 1; }
 
-        // Trigger both endpoints locally to force them to run their sync logic
-        // We use absolute URLs if VERCEL_URL is present, otherwise localhost (though this runs in Vercel)
+        // Trigger the endpoints based on the cron type
         const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+        
+        const urlObj = new URL(request.url, baseUrl);
+        const sweepType = urlObj.searchParams.get('type') || 'daily';
 
-        await Promise.allSettled([
-            fetch(`${baseUrl}/api/tasas`),
-            fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}&forceXlsx=true`),
-            fetch(`${baseUrl}/api/historico?mes=${prevMes}&anio=${prevAnio}&forceXlsx=true`)
-        ]);
+        let promises = [fetch(`${baseUrl}/api/tasas`)];
 
-        return NextResponse.json({ success: true, message: 'Tasas sincronizadas exitosamente.' });
+        if (sweepType === 'sweep-current') {
+            promises.push(fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}&forceXlsx=true`));
+        } else if (sweepType === 'sweep-previous') {
+            promises.push(fetch(`${baseUrl}/api/historico?mes=${prevMes}&anio=${prevAnio}&forceXlsx=true`));
+        } else {
+            promises.push(fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}`));
+        }
+
+        await Promise.allSettled(promises);
+
+        return NextResponse.json({ success: true, sweepType, message: 'Tasas sincronizadas exitosamente.' });
     } catch (error) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }

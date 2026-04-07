@@ -1,20 +1,24 @@
 {
     "crons": [
         {
-            "path": "/api/cron/sync",
+            "path": "/api/cron/sync?type=daily",
             "schedule": "0 4 * * 1-5"
         },
         {
-            "path": "/api/cron/sync",
+            "path": "/api/cron/sync?type=daily",
             "schedule": "30 21 * * 1-5"
         },
         {
-            "path": "/api/cron/sync",
+            "path": "/api/cron/sync?type=daily",
             "schedule": "0 10 * * *"
         },
         {
-            "path": "/api/cron/sync",
+            "path": "/api/cron/sync?type=sweep-current",
             "schedule": "0 11 * * 1"
+        },
+        {
+            "path": "/api/cron/sync?type=sweep-previous",
+            "schedule": "0 11 1 * *"
         }
     ]
 }

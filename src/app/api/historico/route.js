@@ -203,11 +203,15 @@ export async function GET(request) {
             if (!links.includes(fullLink)) links.push(fullLink);
           });
 
-          // OPTIMIZATION FOR VERCEL: Only fetch the VERY FIRST link (current year). 
-          // Downloading multiple 5MB Excel files exceeds Vercel's 1024MB Memory / 10s Timeout.
-          links = links.slice(0, 1);
+          // EXTENDED OPTIMIZATION: We allow checking up to 3 old files in case of traversing previous months.
+          let linksToCheck = links.slice(0, 3);
+          let foundAny = false;
 
-          for (const link of links) {
+          for (const link of linksToCheck) {
+            if (foundAny) {
+                console.log(`⏩ Optimization: Dates for ${mes}/${anio} were found. Skipping further files.`);
+                break;
+            }
             try {
               console.log(`📡 Descargando archivo XLSX: ${link}`);
               const response = await axios.get(link, {
@@ -239,6 +243,7 @@ export async function GET(request) {
                         isWeekend: false,
                         source: "XLSX"
                       });
+                      foundAny = true;
                     }
                   }
                 }
