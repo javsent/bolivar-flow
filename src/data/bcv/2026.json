@@ -161,33 +161,15 @@
       "usd": 304.6796,
       "euro": 357.88579854,
       "isWeekend": false
-    },
-    {
-      "fecha": "04/01/2026",
-      "usd": 301.3709,
-      "euro": 354.49354854,
-      "isWeekend": true
-    },
-    {
-      "fecha": "03/01/2026",
-      "usd": 301.3709,
-      "euro": 354.49354854,
-      "isWeekend": true
-    },
-    {
-      "fecha": "02/01/2026",
-      "usd": 301.3709,
-      "euro": 354.49354854,
-      "isWeekend": false
-    },
-    {
-      "fecha": "01/01/2026",
-      "usd": 298.1431,
-      "euro": 351.24536754,
-      "isWeekend": true
     }
   ],
   "2": [
+    {
+      "fecha": "28/02/2026",
+      "usd": 417.3579,
+      "euro": 493.11253242,
+      "isWeekend": true
+    },
     {
       "fecha": "27/02/2026",
       "usd": 417.3579,
@@ -356,15 +338,13 @@
       "fecha": "31/03/2026",
       "usd": 473.8702,
       "euro": 542.63824342,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "30/03/2026",
       "usd": 471.7004,
       "euro": 543.94131626,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "29/03/2026",
@@ -382,36 +362,31 @@
       "fecha": "27/03/2026",
       "usd": 468.5145,
       "euro": 541.19046924,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "26/03/2026",
       "usd": 466.6014,
       "euro": 540.17044273,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "25/03/2026",
       "usd": 462.6687,
       "euro": 536.09422269,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "24/03/2026",
       "usd": 459.4525,
       "euro": 533.45651417,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "23/03/2026",
       "usd": 457.0757,
       "euro": 527.7944523,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "22/03/2026",
@@ -429,8 +404,7 @@
       "fecha": "20/03/2026",
       "usd": 455.2547,
       "euro": 524.50804496,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "19/03/2026",
@@ -442,22 +416,19 @@
       "fecha": "18/03/2026",
       "usd": 451.5072,
       "euro": 520.64198246,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "17/03/2026",
       "usd": 448.3686,
       "euro": 514.97823921,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "16/03/2026",
       "usd": 446.8048,
       "euro": 511.22064801,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "15/03/2026",
@@ -475,36 +446,31 @@
       "fecha": "13/03/2026",
       "usd": 443.2587,
       "euro": 510.34147165,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "12/03/2026",
       "usd": 440.9657,
       "euro": 510.48835226,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "11/03/2026",
       "usd": 438.205,
       "euro": 510.2108456,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "10/03/2026",
       "usd": 436.2419,
       "euro": 505.41677808,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "09/03/2026",
       "usd": 433.1664,
       "euro": 501.72797779,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "08/03/2026",
@@ -522,36 +488,31 @@
       "fecha": "06/03/2026",
       "usd": 431.0113,
       "euro": 499.61536862,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "05/03/2026",
       "usd": 427.9302,
       "euro": 497.42178517,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "04/03/2026",
       "usd": 425.6741,
       "euro": 491.49182934,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "03/03/2026",
       "usd": 421.8772,
       "euro": 493.53726119,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "02/03/2026",
       "usd": 419.9873,
       "euro": 495.60601336,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "01/03/2026",
@@ -562,18 +523,154 @@
   ],
   "4": [
     {
+      "fecha": "30/04/2026",
+      "usd": 487.1192,
+      "euro": 569.76384347,
+      "isWeekend": false
+    },
+    {
+      "fecha": "29/04/2026",
+      "usd": 486.1955,
+      "euro": 569.42730764,
+      "isWeekend": false
+    },
+    {
+      "fecha": "28/04/2026",
+      "usd": 485.2251,
+      "euro": 569.29520082,
+      "isWeekend": false
+    },
+    {
+      "fecha": "27/04/2026",
+      "usd": 484.7404,
+      "euro": 567.40318041,
+      "isWeekend": false
+    },
+    {
+      "fecha": "26/04/2026",
+      "usd": 483.8695,
+      "euro": 566.84344186,
+      "isWeekend": true
+    },
+    {
+      "fecha": "25/04/2026",
+      "usd": 483.8695,
+      "euro": 566.84344186,
+      "isWeekend": true
+    },
+    {
+      "fecha": "24/04/2026",
+      "usd": 483.8695,
+      "euro": 566.84344186,
+      "isWeekend": false
+    },
+    {
+      "fecha": "23/04/2026",
+      "usd": 483.3379,
+      "euro": 567.01335724,
+      "isWeekend": false
+    },
+    {
+      "fecha": "22/04/2026",
+      "usd": 482.7586,
+      "euro": 567.70963084,
+      "isWeekend": false
+    },
+    {
+      "fecha": "21/04/2026",
+      "usd": 481.6989,
+      "euro": 567.58099688,
+      "isWeekend": false
+    },
+    {
+      "fecha": "20/04/2026",
+      "usd": 481.2177,
+      "euro": 568.51540295,
+      "isWeekend": false
+    },
+    {
+      "fecha": "19/04/2026",
+      "usd": 480.2572,
+      "euro": 565.41160413,
+      "isWeekend": true
+    },
+    {
+      "fecha": "18/04/2026",
+      "usd": 480.2572,
+      "euro": 565.41160413,
+      "isWeekend": true
+    },
+    {
+      "fecha": "17/04/2026",
+      "usd": 480.2572,
+      "euro": 565.41160413,
+      "isWeekend": false
+    },
+    {
+      "fecha": "16/04/2026",
+      "usd": 479.7775,
+      "euro": 565.9839212,
+      "isWeekend": false
+    },
+    {
+      "fecha": "15/04/2026",
+      "usd": 478.5811,
+      "euro": 564.97934598,
+      "isWeekend": false
+    },
+    {
+      "fecha": "14/04/2026",
+      "usd": 477.6259,
+      "euro": 559.20917997,
+      "isWeekend": false
+    },
+    {
+      "fecha": "13/04/2026",
+      "usd": 477.1488,
+      "euro": 560.04863251,
+      "isWeekend": false
+    },
+    {
+      "fecha": "12/04/2026",
+      "usd": 476.4342,
+      "euro": 556.66095493,
+      "isWeekend": true
+    },
+    {
+      "fecha": "11/04/2026",
+      "usd": 476.4342,
+      "euro": 556.66095493,
+      "isWeekend": true
+    },
+    {
+      "fecha": "10/04/2026",
+      "usd": 476.4342,
+      "euro": 556.66095493,
+      "isWeekend": false
+    },
+    {
+      "fecha": "09/04/2026",
+      "usd": 475.9583,
+      "euro": 556.51900185,
+      "isWeekend": false
+    },
+    {
+      "fecha": "08/04/2026",
+      "usd": 475.0083,
+      "euro": 549.69860509,
+      "isWeekend": false
+    },
+    {
       "fecha": "07/04/2026",
       "usd": 474.5338,
       "euro": 547.55980648,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "06/04/2026",
       "usd": 474.0598,
       "euro": 550.89541238,
-      "isWeekend": false,
-      "source": "XLSX"
+      "isWeekend": false
     },
     {
       "fecha": "05/04/2026",
@@ -603,8 +700,39 @@
       "fecha": "01/04/2026",
       "usd": 473.9176,
       "euro": 545.94833602,
-      "isWeekend": false,
-      "source": "Manual"
+      "isWeekend": false
+    }
+  ],
+  "5": [
+    {
+      "fecha": "05/05/2026",
+      "usd": 490.0442,
+      "euro": 574.03777588,
+      "isWeekend": false
+    },
+    {
+      "fecha": "04/05/2026",
+      "usd": 489.5547,
+      "euro": 574.19381208,
+      "isWeekend": false
+    },
+    {
+      "fecha": "03/05/2026",
+      "usd": 487.1192,
+      "euro": 569.76384347,
+      "isWeekend": true
+    },
+    {
+      "fecha": "02/05/2026",
+      "usd": 487.1192,
+      "euro": 569.76384347,
+      "isWeekend": true
+    },
+    {
+      "fecha": "01/05/2026",
+      "usd": 487.1192,
+      "euro": 569.76384347,
+      "isWeekend": true
     }
   ]
 }

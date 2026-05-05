@@ -20,12 +20,13 @@ async function runMiner() {
     
     try {
         const links = [];
-        // Páginas a recorrer: 0 (la principal), 1 y 2
-        const pages = [0, 1, 2];
+        let page = 0;
+        let keepScanning = true;
 
-        for (const page of pages) {
+        while (keepScanning) {
             console.log(`🔍 Escaneando enlaces en página ${page}...`);
             const urlConPaginacion = `${URL_BASE}?page=${page}`;
+            let found2026OnPage = false;
             
             try {
                 const { data: html } = await axios.get(urlConPaginacion, { 
@@ -33,16 +34,27 @@ async function runMiner() {
                 });
                 const $ = cheerio.load(html);
                 
-                $('a[href*="_smc.xls"]').each((i, el) => {
+                $('a[href*=".xls"]').each((i, el) => {
                     const href = $(el).attr('href');
-                    const fullLink = href.startsWith('http') ? href : DOMAIN + href;
-                    // Evitamos duplicados por si acaso un archivo aparece en dos páginas
-                    if (!links.includes(fullLink)) {
-                        links.push(fullLink);
+                    if (href && href.includes('26_smc.xls')) {
+                        found2026OnPage = true;
+                        const fullLink = href.startsWith('http') ? href : DOMAIN + href;
+                        // Evitamos duplicados por si acaso un archivo aparece en dos páginas
+                        if (!links.includes(fullLink)) {
+                            links.push(fullLink);
+                        }
                     }
                 });
+
+                if (!found2026OnPage) {
+                    console.log(`🛑 No se encontraron archivos del 2026 en la página ${page}. Deteniendo escaneo.`);
+                    keepScanning = false;
+                } else {
+                    page++;
+                }
             } catch (pageError) {
                 console.error(`⚠️ Error escaneando página ${page}:`, pageError.message);
+                keepScanning = false;
             }
         }
 
