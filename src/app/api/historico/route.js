@@ -318,6 +318,9 @@ export async function GET(request) {
           console.log(`📅 Detectado hueco de ${diff} días entre última fecha (${lastInArray.fecha}) y hoy.`);
           forceFillForward = true;
         }
+      } else if (isCurrentMonth) {
+        console.log(`📅 Mes actual vacío. Forzando fill-forward para heredar del mes anterior.`);
+        forceFillForward = true;
       }
 
       for (const entry of datesFound) {

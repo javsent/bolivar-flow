@@ -100,20 +100,48 @@ async function runMiner() {
         const sortedDates = Object.keys(globalHistory).sort();
         if (sortedDates.length === 0) throw new Error("No se hallaron datos válidos en D5.");
 
+        // Cargar overrides manuales existentes para no sobreescribirlos
+        let existingOverrides = {};
+        if (fs.existsSync(OUTPUT_DIR)) {
+            const availableYears = fs.readdirSync(OUTPUT_DIR).filter(f => f.endsWith('.json'));
+            for (const file of availableYears) {
+                try {
+                    const content = JSON.parse(fs.readFileSync(path.join(OUTPUT_DIR, file), 'utf8'));
+                    for (const month in content) {
+                        for (const entry of content[month]) {
+                            if (entry.source === 'Manual') {
+                                existingOverrides[entry.fecha] = entry;
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+        }
+
         const firstDate = new Date(sortedDates[0] + "T12:00:00");
-        const lastDate = new Date(sortedDates[sortedDates.length - 1] + "T12:00:00");
+        
+        // Rellenar siempre hasta HOY para evitar huecos en fines de semana y cambios de mes
+        const nowVET = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Caracas" }));
+        const todayDate = new Date(nowVET.getFullYear(), nowVET.getMonth(), nowVET.getDate(), 12, 0, 0, 0);
+        
+        const lastExcelDate = new Date(sortedDates[sortedDates.length - 1] + "T12:00:00");
+        const stopDate = todayDate > lastExcelDate ? todayDate : lastExcelDate;
         
         let finalData = {}; // Manteniendo el formato { 2026: { 1: [...] } }
         let lastKnownRate = globalHistory[sortedDates[0]];
 
         let iter = new Date(firstDate);
-        while (iter <= lastDate) {
+        while (iter <= stopDate) {
             const y = iter.getFullYear();
             const m = iter.getMonth() + 1;
             const iso = iter.toISOString().split('T')[0];
             const display = iter.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-            if (globalHistory[iso]) {
+            if (existingOverrides[display]) {
+                const manualEntry = existingOverrides[display];
+                lastKnownRate = { usd: manualEntry.usd, euro: manualEntry.euro };
+                push(finalData, y, m, manualEntry);
+            } else if (globalHistory[iso]) {
                 lastKnownRate = globalHistory[iso];
                 push(finalData, y, m, { fecha: display, ...lastKnownRate, isWeekend: false });
             } else {
