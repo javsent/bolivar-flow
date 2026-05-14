@@ -143,7 +143,7 @@ async function runMiner() {
                 push(finalData, y, m, manualEntry);
             } else if (globalHistory[iso]) {
                 lastKnownRate = globalHistory[iso];
-                push(finalData, y, m, { fecha: display, ...lastKnownRate, isWeekend: false });
+                push(finalData, y, m, { fecha: display, ...lastKnownRate, isWeekend: false, source: "XLSX" });
             } else {
                 push(finalData, y, m, { fecha: display, ...lastKnownRate, isWeekend: true });
             }
