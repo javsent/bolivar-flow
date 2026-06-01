@@ -38,10 +38,28 @@ export async function GET(request) {
     let requestedMonthData = yearData[mes] || [];
     const now = new Date();
 
-    const forceXlsx = searchParams.get('forceXlsx') === 'true';
-
-    // SOLO INTENTAR SINCRONIZAR SI ES EL MES/AÑO ACTUAL (O SI FUE FORZADO) Y NO ESTÁ DESHABILITADO
+    const forceXlsxParam = searchParams.get('forceXlsx') === 'true';
     const isCurrentMonth = anio === now.getFullYear() && mes === (now.getMonth() + 1);
+
+    // Check if past month is incomplete (missing days at the end of the month)
+    let isPastMonthIncomplete = false;
+    if (!isCurrentMonth) {
+      if (requestedMonthData.length > 0) {
+        const lastEntry = requestedMonthData[0]; // descending order
+        const [d, m, y] = lastEntry.fecha.split('/');
+        const lastDate = new Date(y, m - 1, d);
+        const endOfMonth = new Date(anio, mes, 0); // last day of the requested month
+        if (lastDate.getDate() !== endOfMonth.getDate()) {
+          isPastMonthIncomplete = true;
+        }
+      } else {
+        isPastMonthIncomplete = true;
+      }
+    }
+
+    const forceXlsx = forceXlsxParam || isPastMonthIncomplete;
+
+    // SOLO INTENTAR SINCRONIZAR SI ES EL MES/AÑO ACTUAL (O SI FUE FORZADO, O MES PASADO INCOMPLETO) Y NO ESTÁ DESHABILITADO
     if ((isCurrentMonth || forceXlsx) && !disableSync) {
       if (forceXlsx) {
         // En auto-saneamiento, purgamos datos rellenados anteriormente (sin 'source') 

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
  
+## [2026-06-01] - Fix Pérdida de Tasas en Final de Mes
+### Fixed
+- **Tasas Extraviadas a Fin de Mes (Bug Mayo)**: Se corrigió un error crítico donde los últimos días de un mes (ej. 15 al 31 de Mayo) nunca se sincronizaban si el mes terminaba y el usuario no utilizaba activamente la aplicación. Al no ejecutarse el cron job localmente, el mes quedaba incompleto en el disco. Ahora, la API verifica activamente la completitud de cualquier mes pasado que sea solicitado, forzando un "XLSX Scraping" correctivo si detecta que faltan los días finales del mes.
+
+ 
 ## [2026-03-13] - Remoción de Paralelo y Fix de Fechas/Sobrescritura
 ### Added
 - **Identificación de Origen de Datos**: La API ahora rastrea si un dato proviene de `HTML` (Fast Inject) o `XLSX` (Oficial), permitiendo correcciones automáticas.
