@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
@@ -221,20 +222,22 @@ export async function GET(request) {
             if (!links.includes(fullLink)) links.push(fullLink);
           });
 
-          // EXTENDED OPTIMIZATION: We allow checking up to 3 old files in case of traversing previous months.
-          let linksToCheck = links.slice(0, 3);
-          let foundAny = false;
+          // SCAN ALL XLSX FILES: months can span multiple Excel files (e.g. July
+          // may have 1 day in file B and 20 days in file C). We must download
+          // every file that could contain data for the current year.
+          const yearSuffix = String(anio).slice(-2); // "26" for 2026
+          let linksToCheck = links.filter(l => l.includes(yearSuffix + '_smc'));
+          // Fallback: if filter found nothing, try all links (max 4)
+          if (linksToCheck.length === 0) linksToCheck = links.slice(0, 4);
+
+          console.log(`📂 XLSX: ${linksToCheck.length} archivos del año ${anio} a escanear.`);
 
           for (const link of linksToCheck) {
-            if (foundAny) {
-                console.log(`⏩ Optimization: Dates for ${mes}/${anio} were found. Skipping further files.`);
-                break;
-            }
             try {
               console.log(`📡 Descargando archivo XLSX: ${link}`);
               const response = await axios.get(link, {
                 responseType: 'arraybuffer',
-                timeout: 8000,
+                timeout: 15000,
                 headers: { 'User-Agent': 'Mozilla/5.0' }
               });
 
@@ -254,19 +257,21 @@ export async function GET(request) {
 
                     if (eurVal && usdVal && parseInt(yearStr) === anio && parseInt(monthStr) === mes) {
                       const fechaOficial = `${day}/${monthStr}/${yearStr}`;
-                      datesFound.push({
-                        fecha: fechaOficial,
-                        usd: parseFloat(usdVal),
-                        euro: parseFloat(eurVal),
-                        isWeekend: false,
-                        source: "XLSX"
-                      });
-                      foundAny = true;
+                      // Avoid duplicates if same date appears in multiple files
+                      if (!datesFound.some(d => d.fecha === fechaOficial)) {
+                        datesFound.push({
+                          fecha: fechaOficial,
+                          usd: parseFloat(usdVal),
+                          euro: parseFloat(eurVal),
+                          isWeekend: false,
+                          source: "XLSX"
+                        });
+                      }
                     }
                   }
                 }
               });
-              console.log(`Exito parcial: XLSX extrajo ${datesFound.length} fechas para el mes ${mes}`);
+              console.log(`📊 Progreso: XLSX extrajo ${datesFound.length} fechas para el mes ${mes} hasta ahora.`);
             } catch (e) {
               console.error(`💥 Error crítico leyendo XLS: ${link}`, e.message);
             }
