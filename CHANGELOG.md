@@ -2,17 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2026-10-05] - Base de Datos Persistente y Solución Definitiva a Fallos en Cambios de Mes
+## [2026-10-05] - Bolívar Flow v2.0: Base de Datos Persistente, UI Renovada y Corrección de Cambio de Mes
 ### Added
 - **Base de Datos Persistente (`@libsql/client`)**: Se implementó una base de datos indexada (`src/lib/db.js` y `src/lib/ratesRepository.js`) que almacena todas las tasas en una línea de tiempo continua. Soporta SQLite local (`data/bolivar_flow.db`), Vercel Serverless (`/tmp/bolivar_flow.db`) y bases de datos remotas en la nube vía `DATABASE_URL`.
 - **Auto-Seeding Inteligente**: La base de datos se siembra automáticamente al inicializarse a partir de todo el histórico JSON existente (2020 a 2026).
 - **Auto-Persistencia en `/api/tasas`**: Cada vez que se consulta la tasa del día en vivo, se guarda inmediatamente en la base de datos oficial.
+- **Rediseño Completo de Interfaz (v2.0)**:
+  - Integración del logo oficial en alta resolución en Header y Login.
+  - Indicador de versión sutil (`v2.0`) en Header, footer discreto y módulos de la aplicación.
+  - Paleta cinematográfica inspirada en el logo (Dark Canvas `#070b14`, acentos verde menta/esmeralda `#10b981` y azul eléctrico `#3b82f6`).
+  - Glassmorphism refinado, números tabulares monoespaciados grandes y ergonomía optimizada para smartphones.
 
 ### Fixed
 - **Solución Definitiva a Fallos de Cambio de Mes**: Se eliminó la dependencia de arrays mensuales aislados (`yearData[mes]`). Ahora, cualquier día 1 o inicio de mes consulta de forma atómica y exacta la última tasa hábil anterior (`SELECT * FROM rates WHERE fecha < ? AND is_weekend = 0 ORDER BY fecha DESC LIMIT 1`), garantizando la herencia correcta sin importar cambio de mes o de año.
 - **Eliminación de Timeouts 504 en Vercel**: `/api/historico` ya no intenta descargar archivos Excel pesados de forma síncrona durante la navegación del usuario. El tiempo de respuesta de `/api/historico` se redujo de más de 15 segundos a menos de 10 milisegundos.
 - **Sincronización Total de Datos 2026**: Se extrajeron todas las tasas oficiales de los 4 trimestres del 2026 (`2_1_2a26_smc` a `2_1_2d26_smc`), completando agosto, septiembre y octubre de 2026 en la base de datos y en `src/data/bcv/2026.json`.
 - **Corrección en Frontend (`src/app/page.js`)**: Se corrigió el algoritmo de rellenado en `fetchHistory()` que tomaba la tasa del fin de mes para cubrir los primeros días del mes.
+- **Interacción del Botón de Calendario**: Se corrigió el selector de fecha para que cualquier clic en cualquier parte del botón (en el centro, sobre el icono o en los bordes) abra inmediatamente el selector nativo del calendario (`showPicker()`).
 
 ## [2026-06-01] - Fix Pérdida de Tasas en Final de Mes
 ### Fixed

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowsUpDownIcon,
   CalendarDaysIcon,
@@ -15,6 +16,7 @@ import {
   ExclamationTriangleIcon,
   ArrowPathIcon,
   ShareIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/solid";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -91,21 +93,19 @@ export default function CurrencyApp() {
 
   // --- FUNCIÓN PARA RESETEAR A HOY (LIVE) ---
   const resetToToday = () => {
-    // Forzamos el uso de la fecha local del sistema (Venezuela/Local)
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
     const todayStr = `${year}-${month}-${day}`;
-    
+
     setSelectedDate(todayStr);
     fetchCurrentRates();
   };
 
-  // --- TOAST HELPER ---
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2000);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   const handleLogoutClick = () => {
@@ -169,13 +169,11 @@ export default function CurrencyApp() {
     setLoading(true);
     historicoCache.current = {};
     try {
-      // 0. OBTENER FECHA DE HOY (SISTEMA)
       const now = new Date();
       const fd = String(now.getDate()).padStart(2, "0");
       const fm = String(now.getMonth() + 1).padStart(2, "0");
       const todayStr = `${fd}/${fm}/${now.getFullYear()}`;
 
-      // 1. INTENTAR BUSCAR SI YA EXISTE TASA DE HOY EN HISTORIAL
       let tasaHoy = await findValidRateBackwards(now, 1, false);
 
       const res = await fetch("/api/tasas");
@@ -183,24 +181,20 @@ export default function CurrencyApp() {
       const data = await res.json();
 
       if (tasaHoy && tasaHoy.fecha === todayStr) {
-        // Caso: Ya tenemos la tasa de hoy guardada (ej: vía manual o XLSX adelantado)
         setRates({
           ...data,
           bcv: tasaHoy.usd,
-          euro: tasaHoy.euro
+          euro: tasaHoy.euro,
         });
         setDisplayDate(todayStr);
       } else if (data.bcv > 0) {
-        // Caso: El scraper respondió con datos vivos
         setRates(data);
-        setDisplayDate(todayStr); // Forzamos visualmente a "Hoy"
+        setDisplayDate(todayStr);
 
-        // Notificar al usuario si la tasa técnica que reporta el BCV es de otro día
         if (data.fecha && data.fecha !== todayStr) {
           showToast(`Tasa oficial del ${data.fecha}`);
         }
       } else {
-        // Fallback: Si el scraper falla, buscamos la última tasa vigente hacia atrás
         let tasaVigente = await findValidRateBackwards(now, 7, false);
 
         if (tasaVigente) {
@@ -222,7 +216,7 @@ export default function CurrencyApp() {
       setIsHistoricalRate(false);
     } catch (e) {
       console.error("Error cargando tasas:", e);
-      showToast("Error al sincronizar fecha valor");
+      showToast("Error al sincronizar tasas");
     } finally {
       setLoading(false);
     }
@@ -245,7 +239,6 @@ export default function CurrencyApp() {
         setRates((prev) => ({ ...prev, bcv: dayData.usd, euro: dayData.euro }));
         setIsHistoricalRate(true);
 
-        // CORRECCIÓN: Mostramos la fecha que el usuario seleccionó, no la de la tasa hallada
         const selDateObj = new Date(newDate + "T12:00:00");
         const selDay = String(selDateObj.getDate()).padStart(2, "0");
         const selMonth = String(selDateObj.getMonth() + 1).padStart(2, "0");
@@ -267,7 +260,7 @@ export default function CurrencyApp() {
     }
   };
 
-  // --- LÓGICA DE HISTÓRICO CON RELLENADO Y STOP CRONOLÓGICO ---
+  // --- LÓGICA DE HISTÓRICO GARANTIZADO DESDE API V2 ---
   const fetchHistory = async () => {
     setHistLoading(true);
     setHistData([]);
@@ -281,185 +274,180 @@ export default function CurrencyApp() {
       setHistData(rawData);
     } catch (err) {
       console.error(err);
+      showToast("Error consultando histórico");
     } finally {
       setHistLoading(false);
     }
   };
 
-  // --- LÓGICA DE INPUT FINANCIERO (PUNTO FIJO) ---
+  // --- CÁLCULO DE CONVERSIÓN ---
+  useEffect(() => {
+    const currentRate = rates[activeRate];
+    if (!amount || isNaN(amount) || !currentRate) {
+      setConverted(0);
+      return;
+    }
+    const val = parseFloat(amount);
+    if (isForeignToVes) {
+      setConverted(val * currentRate);
+    } else {
+      setConverted(val / currentRate);
+    }
+  }, [amount, activeRate, rates, isForeignToVes]);
+
+  const handleInvert = () => {
+    setIsForeignToVes(!isForeignToVes);
+  };
+
   const handleAmountChange = (e) => {
-    const val = e.target.value.replace(/\D/g, ""); // Solo números
-    const num = parseInt(val || "0", 10);
-    const formatted = formatCurrency(num / 100);
-    setAmount(formatted);
+    const val = e.target.value.replace(/,/g, ".");
+    if (!isNaN(val) || val === "") {
+      setAmount(val);
+    }
   };
 
   const handlePaste = (e) => {
     e.preventDefault();
-    let text = e.clipboardData.getData("text");
-    const cleanText = text.replace(/\D/g, "");
-    if (cleanText) {
-      const num = parseInt(cleanText, 10);
-      const formatted = formatCurrency(num / 100);
-      setAmount(formatted);
+    const paste = (e.clipboardData || window.clipboardData).getData("text");
+    const cleanPaste = paste.replace(/\./g, "").replace(/,/g, ".").trim();
+    if (!isNaN(cleanPaste) && cleanPaste !== "") {
+      setAmount(cleanPaste);
     }
   };
 
-  const handleInvert = () => {
-    // Intercambiar dirección
-    const nextIsForeignToVes = !isForeignToVes;
-    setIsForeignToVes(nextIsForeignToVes);
-
-    // Intercambiar valores
-    const newAmount = formatCurrency(converted);
-    setAmount(newAmount);
-  };
-
-  useEffect(() => {
-    const rateVal = rates[activeRate] || 0;
-    const cleanAmountStr = amount.replace(/\./g, "").replace(",", ".");
-    const num = parseFloat(cleanAmountStr) || 0;
-    setConverted(
-      isForeignToVes ? num * rateVal : rateVal > 0 ? num / rateVal : 0,
-    );
-  }, [amount, activeRate, isForeignToVes, rates]);
-
-  // --- UTILS DE COPIADO ---
   const handleCopySingleResult = () => {
-    const val = formatCurrency(converted);
-    navigator.clipboard
-      .writeText(val)
-      .then(() => showToast(`Monto copiado: ${val}`))
-      .catch((err) => console.error(err));
+    if (!converted) return;
+    const textToCopy = formatCurrency(converted);
+    navigator.clipboard.writeText(textToCopy);
+    showToast("Resultado copiado");
   };
 
   const handleCopyRate = () => {
-    const rateVal = rates[activeRate] || 0;
-    const val = formatCurrency(rateVal);
-    navigator.clipboard
-      .writeText(val)
-      .then(() => showToast(`Tasa copiada: ${val}`))
-      .catch((err) => console.error(err));
+    const currentRate = rates[activeRate];
+    if (!currentRate) return;
+    const textToCopy = new Intl.NumberFormat("de-DE", {
+      minimumFractionDigits: 2,
+    }).format(currentRate);
+    navigator.clipboard.writeText(textToCopy);
+    showToast(`Tasa ${buttonLabels[activeRate]} copiada`);
   };
 
-  // --- COMPARTIR IMAGEN ---
+  // --- GENERACIÓN DE IMAGEN PARA COMPARTIR ---
   const handleShareImage = async () => {
     if (!shareRef.current) return;
-    if (!amount || amount === "0") {
-      showToast("Ingresa un monto para compartir");
-      return;
-    }
+    showToast("Generando comprobante...");
     try {
-      showToast("Generando imagen...");
       const canvas = await html2canvas(shareRef.current, {
-        backgroundColor: "#0f172a",
         scale: 2,
-        windowWidth: 600,
-        windowHeight: shareRef.current.scrollHeight,
+        backgroundColor: "#070b14",
+        useCORS: true,
       });
+
       canvas.toBlob(async (blob) => {
         if (!blob) return;
-        const inputSymbol = isForeignToVes
-          ? activeRate === "euro"
-            ? "€"
-            : "$"
-          : "Bs";
-        const outputSymbol = isForeignToVes
-          ? "Bs"
-          : activeRate === "euro"
-            ? "€"
-            : "$";
-        const rateVal = new Intl.NumberFormat("de-DE", {
-          minimumFractionDigits: 2,
-        }).format(rates[activeRate] || 0);
-        const inputVal = amount;
-        const outputVal = new Intl.NumberFormat("de-DE", {
-          minimumFractionDigits: 2,
-        }).format(converted);
-        const file = new File([blob], "calculo-bolivar-flow.png", {
-          type: "image/png",
-        });
-        const shareText =
-          `📊 *Reporte Bolivar Flow*\n\n` +
-          `📆 Fecha: ${displayDate}\n` +
-          `💵 Tasa: ${rateVal} Bs\n` +
-          `🔄 Conversión: ${inputVal} ${inputSymbol} ➝ ${outputVal} ${outputSymbol}\n\n` +
-          `🚀 Calculado en: bolivar-flow.vercel.app`;
 
-        if (navigator.share) {
+        const isMobile =
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent,
+          );
+
+        if (isMobile && navigator.canShare && navigator.canShare({ files: [new File([blob], "bolivar-flow.png", { type: "image/png" })] })) {
+          const file = new File([blob], "bolivar-flow.png", {
+            type: "image/png",
+          });
           try {
             await navigator.share({
               files: [file],
-              title: "Bolívar Flow Cálculo",
-              text: shareText,
+              title: "Tasa de Cambio - Bolívar Flow",
+              text: `Cotización de ${buttonLabels[activeRate]} al ${displayDate}`,
             });
-          } catch (error) {
-            if (error.name !== "AbortError")
-              console.error("Error sharing:", error);
+            showToast("Compartido exitosamente");
+          } catch (shareError) {
+            if (shareError.name !== "AbortError") {
+              downloadFallback(blob);
+            }
           }
         } else {
-          const link = document.createElement("a");
-          link.download = "bolivar-flow.png";
-          link.href = canvas.toDataURL();
-          link.click();
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ "image/png": blob }),
+            ]);
+            showToast("¡Imagen copiada al portapapeles!");
+          } catch (clipError) {
+            downloadFallback(blob);
+          }
         }
       }, "image/png");
     } catch (e) {
-      showToast("Error generando imagen");
+      console.error(e);
+      showToast("Error al generar imagen");
     }
   };
 
-  // --- EXPORTACIONES ---
-  const exportToExcel = () => {
-    const dataClean = histData.map((item) => ({
-      "Fecha Valor": item.fecha,
-      "USD (Bs)": item.usd,
-      "EUR (Bs)": item.euro,
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(dataClean);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Historial BCV");
-    XLSX.writeFile(workbook, `Historial_BCV_${histMonth}_${histYear}.xlsx`);
+  const downloadFallback = (blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `BolivarFlow_${activeRate}_${displayDate.replace(/\//g, "-")}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("Imagen descargada");
   };
 
-  const exportToPDF = async () => {
+  // --- EXPORTAR EXCEL ---
+  const exportToExcel = () => {
+    if (histData.length === 0) return;
+    const currentMonthName = monthNames[histMonth - 1] || histMonth;
+
+    const dataToExport = histData.map((item) => ({
+      Fecha: item.fecha,
+      "Tasa USD": item.usd,
+      "Tasa EUR": item.euro,
+      Estado: item.isWeekend ? "Fin de semana / Feriado" : "Oficial BCV",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `Tasas_${histMonth}_${histYear}`);
+
+    XLSX.writeFile(workbook, `BolivarFlow_BCV_${currentMonthName}_${histYear}.xlsx`);
+    showToast("Archivo Excel descargado");
+  };
+
+  // --- EXPORTAR PDF ---
+  const exportToPDF = () => {
     if (histData.length === 0) return;
     try {
       const doc = new jsPDF("p", "mm", "a4");
-      const pageWidth = doc.internal.pageSize.width;
-      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
       const cronoData = [...histData].reverse();
 
-      // --- HEADER ---
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, 0, pageWidth, 45, "F");
-      doc.setFontSize(24);
-      doc.setTextColor(16, 185, 129);
+      doc.setFillColor(7, 11, 20);
+      doc.rect(0, 0, pageWidth, 42, "F");
+
+      doc.setTextColor(45, 212, 191);
+      doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
-      doc.text("BOLÍVAR FLOW", 15, 22, { charSpace: 0 });
-      doc.setFontSize(9);
+      doc.text("BOLÍVAR FLOW v2.0", 15, 18, { charSpace: 0 });
+
+      doc.setFontSize(8);
       doc.setTextColor(148, 163, 184);
       doc.setFont("helvetica", "normal");
-      doc.text("REPORTE ANALÍTICO DE TASAS OFICIALES BCV", 15, 30, {
+      doc.text("SISTEMA DE GESTIÓN Y MONITOREO CAMBIARIO", 15, 25, { charSpace: 0 });
+      doc.text("FUENTE OFICIAL: BANCO CENTRAL DE VENEZUELA", 15, 30, { charSpace: 0 });
+
+      const currentMonthName = monthNames[histMonth - 1] || histMonth;
+      doc.text(`MES: ${currentMonthName} / AÑO: ${histYear}`, pageWidth - 15, 22, {
+        align: "right",
         charSpace: 0,
       });
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(10);
-
-      // CAMBIO: Mostrar nombre del mes en lugar del número
-      const currentMonthName = monthNames[histMonth - 1] || histMonth;
-      doc.text(
-        `MES: ${currentMonthName} / AÑO: ${histYear}`,
-        pageWidth - 15,
-        22,
-        { align: "right", charSpace: 0 },
-      );
       doc.text(`GENERADO POR: ${user}`, pageWidth - 15, 30, {
         align: "right",
         charSpace: 0,
       });
 
-      // --- BLOQUE ESTADÍSTICO DUAL ---
       const usdIni = cronoData[0].usd;
       const usdFin = cronoData[cronoData.length - 1].usd;
       const eurIni = cronoData[0].euro;
@@ -475,7 +463,6 @@ export default function CurrencyApp() {
       doc.setDrawColor(226, 232, 240);
       doc.line(15, 61, pageWidth - 15, 61);
 
-      // Card USD
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(15, 65, 85, 22, 2, 2, "F");
       doc.setFontSize(9);
@@ -484,108 +471,33 @@ export default function CurrencyApp() {
       doc.text("DIVISA: DÓLAR (USD)", 20, 71, { charSpace: 0 });
       doc.setTextColor(30, 41, 59);
       doc.setFontSize(10);
-      doc.text(`DE ${usdIni.toFixed(2)} Bs A ${usdFin.toFixed(2)} Bs`, 20, 77, {
-        charSpace: 0,
-      });
-      doc.setTextColor(
-        varUsd >= 0 ? 185 : 22,
-        varUsd >= 0 ? 28 : 163,
-        varUsd >= 0 ? 28 : 74,
-      );
+      doc.text(`DE ${usdIni.toFixed(2)} Bs A ${usdFin.toFixed(2)} Bs`, 20, 77, { charSpace: 0 });
+      doc.setTextColor(varUsd >= 0 ? 185 : 22, varUsd >= 0 ? 28 : 163, varUsd >= 0 ? 28 : 74);
       doc.setFont("helvetica", "bold");
-      doc.text(`VAR: ${varUsd >= 0 ? "+" : ""}${varUsd.toFixed(2)}%`, 20, 83, {
-        charSpace: 0,
-      });
+      doc.text(`VAR: ${varUsd >= 0 ? "+" : ""}${varUsd.toFixed(2)}%`, 20, 83, { charSpace: 0 });
 
-      // Card EUR
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(110, 65, 85, 22, 2, 2, "F");
       doc.setTextColor(100, 116, 139);
       doc.setFont("helvetica", "normal");
       doc.text("DIVISA: EURO (EUR)", 115, 71, { charSpace: 0 });
       doc.setTextColor(30, 41, 59);
-      doc.text(
-        `DE ${eurIni.toFixed(2)} Bs A ${eurFin.toFixed(2)} Bs`,
-        115,
-        77,
-        { charSpace: 0 },
-      );
-      doc.setTextColor(
-        varEur >= 0 ? 185 : 22,
-        varEur >= 0 ? 28 : 163,
-        varEur >= 0 ? 28 : 74,
-      );
+      doc.text(`DE ${eurIni.toFixed(2)} Bs A ${eurFin.toFixed(2)} Bs`, 115, 77, { charSpace: 0 });
+      doc.setTextColor(varEur >= 0 ? 185 : 22, varEur >= 0 ? 28 : 163, varEur >= 0 ? 28 : 74);
       doc.setFont("helvetica", "bold");
-      doc.text(`VAR: ${varEur >= 0 ? "+" : ""}${varEur.toFixed(2)}%`, 115, 83, {
-        charSpace: 0,
-      });
+      doc.text(`VAR: ${varEur >= 0 ? "+" : ""}${varEur.toFixed(2)}%`, 115, 83, { charSpace: 0 });
 
-      // --- GRÁFICA VECTORIAL ---
-      const gY = 105;
-      const gH = 45;
-      const gW = pageWidth - 40;
-      const gX = 25;
-
-      doc.setTextColor(30, 41, 59);
-      doc.setFont("helvetica", "bold");
-      doc.text("HISTÓRICO COMPARATIVO BCV", 15, 100, { charSpace: 0 });
-
-      doc.setDrawColor(203, 213, 225);
-      doc.setLineWidth(0.1);
-      doc.line(gX, gY, gX, gY + gH);
-      doc.line(gX, gY + gH, gX + gW, gY + gH);
-
-      const allRates = [
-        ...cronoData.map((d) => d.usd),
-        ...cronoData.map((d) => d.euro),
-      ];
-      const maxV = Math.max(...allRates) * 1.02;
-      const minV = Math.min(...allRates) * 0.98;
-      const rangeV = maxV - minV;
-
-      doc.setFontSize(7);
-      doc.setTextColor(148, 163, 184);
-      doc.text(maxV.toFixed(2), gX - 2, gY + 2, {
-        align: "right",
-        charSpace: 0,
-      });
-      doc.text(minV.toFixed(2), gX - 2, gY + gH, {
-        align: "right",
-        charSpace: 0,
-      });
-
-      const getP = (val, i) => ({
-        x: gX + i * (gW / (cronoData.length - 1)),
-        y: gY + gH - ((val - minV) / rangeV) * gH,
-      });
-
-      doc.setDrawColor(16, 185, 129);
-      doc.setLineWidth(0.5);
-      for (let i = 0; i < cronoData.length - 1; i++) {
-        const p1 = getP(cronoData[i].usd, i);
-        const p2 = getP(cronoData[i + 1].usd, i + 1);
-        doc.line(p1.x, p1.y, p2.x, p2.y);
-      }
-
-      doc.setDrawColor(59, 130, 246);
-      for (let i = 0; i < cronoData.length - 1; i++) {
-        const p1 = getP(cronoData[i].euro, i);
-        const p2 = getP(cronoData[i + 1].euro, i + 1);
-        doc.line(p1.x, p1.y, p2.x, p2.y);
-      }
-
-      // --- TABLA Y PIE DE PÁGINA GLOBAL ---
       autoTable(doc, {
         head: [["FECHA", "USD ($)", "EUR (€)", "ESTADO"]],
         body: histData.map((i) => [
           i.fecha,
           i.usd.toFixed(4),
           i.euro.toFixed(4),
-          i.isWeekend ? "CERRADO" : "OPERATIVO",
+          i.isWeekend ? "FIN DE SEMANA" : "OPERATIVO",
         ]),
-        startY: 162,
+        startY: 96,
         theme: "grid",
-        headStyles: { fillColor: [15, 23, 42], halign: "center" },
+        headStyles: { fillColor: [7, 11, 20], halign: "center" },
         columnStyles: {
           0: { halign: "center" },
           1: { halign: "right" },
@@ -596,22 +508,13 @@ export default function CurrencyApp() {
           doc.setFontSize(8);
           doc.setTextColor(150);
           doc.setFont("helvetica", "normal");
-          doc.text(
-            "rybak.Software © 2026 - Reporte generado por sistema Bolívar Flow",
-            15,
-            pageHeight - 10,
-            { charSpace: 0 },
-          );
-          doc.text(
-            `Página ${doc.internal.getNumberOfPages()}`,
-            pageWidth - 15,
-            pageHeight - 10,
-            { align: "right", charSpace: 0 },
-          );
+          doc.text("rybak.Software © 2026 - Reporte generado por Bolívar Flow v2.0", 15, pageHeight - 10, { charSpace: 0 });
+          doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageWidth - 15, pageHeight - 10, { align: "right", charSpace: 0 });
         },
         didParseCell: (d) => {
-          if (d.section === "body" && d.row.raw[3] === "CERRADO")
+          if (d.section === "body" && d.row.raw[3] === "FIN DE SEMANA") {
             d.cell.styles.textColor = [160, 160, 160];
+          }
         },
       });
 
@@ -634,39 +537,54 @@ export default function CurrencyApp() {
       .then(() => showToast("¡Tabla copiada al portapapeles!"));
   };
 
-  // --- CUADRO DE CARGA ---
+  // --- PANTALLA DE CARGA ---
   if (loading && rates.bcv === 0) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center p-4">
-        <BoltIcon className="h-12 w-12 text-emerald-500 animate-pulse mb-4" />
-        <p className="text-emerald-500 font-mono text-xs uppercase tracking-[0.3em] animate-pulse">
+      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center p-4">
+        <div className="relative mb-6">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+            <BoltIcon className="h-9 w-9 text-emerald-400 animate-pulse" />
+          </div>
+          <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+          </span>
+        </div>
+        <p className="text-emerald-400 font-mono text-xs uppercase tracking-[0.3em] font-bold animate-pulse">
           Sincronizando Mercado...
         </p>
+        <span className="text-[10px] text-slate-500 font-mono mt-2">Bolívar Flow v2.0</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-full bg-transparent flex flex-col items-center p-4 text-white font-sans relative">
+    <div className="min-h-full bg-transparent flex flex-col items-center p-3 sm:p-5 text-white font-sans relative">
+      {/* COMPONENTE OCULTO PARA COMPARTIR EN CANVAS */}
       <div
         ref={shareRef}
-        className="fixed top-0 left-[-9999px] w-[600px] bg-[#0f172a] p-10 flex flex-col font-sans text-white border-4 border-emerald-500/20"
+        className="fixed top-0 left-[-9999px] w-[600px] bg-[#070b14] p-10 flex flex-col font-sans text-white border-4 border-emerald-500/30"
       >
-        <div className="text-center mb-10 flex flex-col items-center">
-          <div className="flex items-center justify-center gap-4">
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="flex items-center justify-center gap-3">
             <h1 className="text-5xl font-black uppercase tracking-tighter leading-none">
               <span className="emerald-gradient-text">BOLÍVAR</span> <span className="blue-gradient-text">FLOW</span>
             </h1>
-            <BoltIcon className="h-12 w-10 text-blue-500 flex-shrink-0 -mt-1" />
+            <BoltIcon className="h-11 w-9 text-blue-400 flex-shrink-0 -mt-1" />
           </div>
-          <p className="text-sm text-slate-500 uppercase tracking-[0.6em] font-bold mt-3">
-            Análisis Cambiario
-          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+              v2.0
+            </span>
+            <p className="text-xs text-slate-400 uppercase tracking-[0.4em] font-bold">
+              Cotización Oficial
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-8 mb-10">
-          <div className="bg-[#1e293b] p-10 rounded-[2.5rem] border-2 border-slate-700 text-center shadow-2xl flex flex-col items-center">
-            <p className="text-slate-400 uppercase text-2xl tracking-widest font-bold mb-4">
+        <div className="flex flex-col gap-6 mb-8">
+          <div className="bg-[#0f172a] p-8 rounded-3xl border border-slate-700/80 text-center shadow-2xl flex flex-col items-center">
+            <p className="text-slate-400 uppercase text-xl tracking-widest font-bold mb-3">
               Tasa de Cambio: {buttonLabels[activeRate]}
             </p>
 
@@ -676,182 +594,265 @@ export default function CurrencyApp() {
                   minimumFractionDigits: 2,
                 }).format(rates[activeRate] || 0)}
               </span>
-              <span className="text-3xl font-bold text-emerald-500">Bs</span>
+              <span className="text-3xl font-bold text-emerald-400">Bs</span>
             </div>
 
-            <div className="mt-14 bg-slate-900 px-10 h-14 rounded-full border-2 border-yellow-500/40 flex items-center justify-center min-w-[240px]">
-              <p className="text-yellow-400 text-2xl uppercase font-black tracking-[0.2em] leading-none pb-5">
-                {displayDate}
+            <div className="mt-4 bg-slate-900/90 px-8 py-2.5 rounded-full border border-emerald-500/30 flex items-center justify-center">
+              <p className="text-emerald-400 text-lg uppercase font-mono font-bold tracking-wider">
+                Vigencia: {displayDate}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-8">
-            <div className="flex justify-between items-center bg-slate-800/40 p-8 rounded-3xl border border-slate-700/50">
-              <span className="text-slate-400 font-bold text-2xl uppercase tracking-wider">
+          <div className="flex flex-col gap-5">
+            <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+              <span className="text-slate-400 font-bold text-xl uppercase tracking-wider">
                 Monto:
               </span>
-              <span className="text-white font-mono text-5xl font-bold">
+              <span className="text-white font-mono text-4xl font-bold">
                 {amount || "0"}{" "}
-                <span className="text-slate-500 text-3xl ml-2">
+                <span className="text-slate-500 text-2xl ml-2">
                   {isForeignToVes ? (activeRate === "euro" ? "€" : "$") : "Bs"}
                 </span>
               </span>
             </div>
 
-            <div className="flex flex-col bg-emerald-900/10 p-10 rounded-3xl border-2 border-emerald-500/30">
-              <span className="text-emerald-400 font-bold text-2xl uppercase tracking-widest mb-4">
+            <div className="flex flex-col bg-emerald-950/20 p-8 rounded-2xl border border-emerald-500/30">
+              <span className="text-emerald-400 font-bold text-lg uppercase tracking-widest mb-2">
                 Equivale a:
               </span>
               <div className="flex justify-end items-baseline gap-3">
-                <span className="text-white font-mono text-6xl font-black tracking-tight leading-none">
+                <span className="text-white font-mono text-5xl font-black tracking-tight leading-none">
                   {new Intl.NumberFormat("de-DE", {
                     minimumFractionDigits: 2,
                   }).format(converted)}
                 </span>
-                <span className="text-emerald-500 text-4xl font-bold uppercase">
-                  {isForeignToVes
-                    ? "Bs"
-                    : activeRate === "euro"
-                      ? "EUR"
-                      : "USD"}
+                <span className="text-emerald-400 text-3xl font-bold uppercase">
+                  {isForeignToVes ? "Bs" : activeRate === "euro" ? "EUR" : "USD"}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="text-center pt-8 border-t border-slate-800 mt-auto">
-          <p className="text-2xl font-black text-blue-500 tracking-tighter">
-            bolivar-flow.vercel.app
-          </p>
+        <div className="text-center pt-6 border-t border-slate-800/80 mt-auto flex items-center justify-between">
+          <p className="text-sm font-bold text-slate-400">bolivar-flow.vercel.app</p>
+          <p className="text-sm font-bold text-emerald-400">Rybak Software © 2026</p>
         </div>
       </div>
 
+      {/* TOAST NOTIFICACIÓN */}
       {toastMessage && (
-        <div className="fixed bottom-10 z-[200] animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="bg-slate-800 border border-slate-600 text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2">
-            <ClipboardDocumentIcon className="h-4 w-4 text-emerald-400" />
-            <span className="text-xs font-bold tracking-wide">
+        <div className="fixed bottom-6 z-[200] animate-slide-up">
+          <div className="bg-slate-900/95 border border-emerald-500/40 text-white px-4 py-2.5 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex items-center gap-2.5 backdrop-blur-md">
+            <SparklesIcon className="h-4 w-4 text-emerald-400 animate-spin" />
+            <span className="text-xs font-semibold tracking-wide text-slate-100">
               {toastMessage}
             </span>
           </div>
         </div>
       )}
 
-      <div className="w-full max-w-md flex items-center justify-between mb-4 px-1">
+      {/* TOP USER BAR */}
+      <div className="w-full max-w-md flex items-center justify-between mb-3 px-2">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            Hola, <span className="text-white italic">{user}</span>
+          <div className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </div>
+          <p className="text-[11px] font-bold text-slate-400 tracking-wider">
+            Hola, <span className="text-white">{user}</span>
           </p>
         </div>
         <button
           onClick={handleLogoutClick}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 text-[10px] font-bold uppercase tracking-widest group animate-in slide-in-from-right-2 ${confirmLogout ? "bg-amber-500 text-white border-amber-400 scale-105 shadow-lg shadow-amber-900/20" : "bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white"}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all duration-200 text-[11px] font-bold tracking-wider ${
+            confirmLogout
+              ? "bg-amber-500/20 text-amber-300 border-amber-500/50 scale-105"
+              : "bg-slate-800/40 border-slate-700/50 text-slate-400 hover:text-red-400 hover:border-red-500/30"
+          }`}
         >
           {confirmLogout ? (
             <>
-              <ExclamationTriangleIcon className="h-4 w-4" /> ¿Confirmar?
+              <ExclamationTriangleIcon className="h-3.5 w-3.5" /> Confirmar
             </>
           ) : (
             <>
-              <ArrowRightOnRectangleIcon className="h-4 w-4" /> Salir
+              <ArrowRightOnRectangleIcon className="h-3.5 w-3.5" /> Salir
             </>
           )}
         </button>
       </div>
 
-      <div className="w-full max-w-md glass-card p-1 rounded-2xl mb-4 flex shadow-2xl relative z-20 animate-slide-up">
+      {/* SELECTOR DE VISTA SUPERIOR (CALC / HISTORIAL) */}
+      <div className="w-full max-w-md glass-card-subtle p-1 rounded-2xl mb-3.5 flex relative z-20">
         <button
           onClick={() => setView("calculator")}
-          className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all ${view === "calculator" ? "bg-white/10 text-emerald-400 font-bold shadow-lg" : "text-slate-500 hover:text-white"}`}
+          className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+            view === "calculator"
+              ? "bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-white border border-emerald-500/30 shadow-lg shadow-emerald-500/5"
+              : "text-slate-400 hover:text-white"
+          }`}
         >
-          <CalculatorIcon className="h-4 w-4" /> Calc
+          <CalculatorIcon className={`h-4 w-4 ${view === "calculator" ? "text-emerald-400" : ""}`} />
+          Calculadora
         </button>
         <button
           onClick={() => setView("history")}
-          className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all ${view === "history" ? "bg-white/10 text-emerald-400 font-bold shadow-lg" : "text-slate-500 hover:text-white"}`}
+          className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+            view === "history"
+              ? "bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-white border border-emerald-500/30 shadow-lg shadow-emerald-500/5"
+              : "text-slate-400 hover:text-white"
+          }`}
         >
-          <CalendarDaysIcon className="h-4 w-4" /> Histórico
+          <CalendarDaysIcon className={`h-4 w-4 ${view === "history" ? "text-emerald-400" : ""}`} />
+          Histórico
         </button>
       </div>
 
-      <div className="w-full max-w-md glass-card p-8 rounded-3xl min-h-[540px] relative z-10 flex flex-col shadow-2xl animate-slide-up [animation-delay:100ms]">
+      {/* CONTENEDOR PRINCIPAL */}
+      <div className="w-full max-w-md glass-card p-6 sm:p-7 rounded-3xl min-h-[560px] relative z-10 flex flex-col shadow-2xl animate-slide-up">
         {view === "calculator" ? (
-          <div className="animate-in fade-in duration-300 flex-1 flex flex-col">
-            <div className="flex justify-between items-center mb-8">
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-black uppercase tracking-tight leading-none">
-                  <span className="emerald-gradient-text">BOLÍVAR</span> <span className="blue-gradient-text">FLOW</span>
-                </h1>
-                <BoltIcon className="h-8 w-8 text-blue-500 animate-pulse-subtle" />
+          <div className="flex-1 flex flex-col">
+            {/* HEADER CON LOGO OFICIAL Y BADGE V2.0 */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2.5">
+                <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-emerald-500/30 bg-[#070b14] flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                  <Image
+                    src="/logo.png"
+                    alt="Bolívar Flow"
+                    width={36}
+                    height={36}
+                    priority
+                    className="object-contain"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-black uppercase tracking-tight leading-none">
+                      <span className="emerald-gradient-text">BOLÍVAR</span>{" "}
+                      <span className="blue-gradient-text">FLOW</span>
+                    </h1>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black tracking-wider bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                      v2.0
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-slate-400 uppercase tracking-[0.25em] font-semibold mt-0.5">
+                    Monitor Cambiario
+                  </span>
+                </div>
               </div>
+
               <div
-                className={`px-2 py-1 rounded text-[10px] font-bold border ${isHistoricalRate ? "bg-amber-500/10 text-amber-400 border-amber-500" : "bg-emerald-500/10 text-emerald-400 border-emerald-500"}`}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 ${
+                  isHistoricalRate
+                    ? "bg-amber-500/10 text-amber-400 border-amber-500/40"
+                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/40"
+                }`}
               >
-                {isHistoricalRate ? "HISTO" : "LIVE"}
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    isHistoricalRate ? "bg-amber-400" : "bg-emerald-400 animate-pulse"
+                  }`}
+                ></span>
+                {isHistoricalRate ? "HISTÓRICO" : "LIVE"}
               </div>
             </div>
 
-            <div className="mb-8 p-6 rounded-2xl bg-slate-900/40 border border-white/5 text-center shadow-inner relative overflow-hidden group">
-              <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-              <h2 className="text-xl font-extrabold text-emerald-400 uppercase mb-1 tracking-wider">
-                {buttonLabels[activeRate]}
-              </h2>
-              <p
-                className={`text-[10px] mb-3 font-bold uppercase tracking-[0.2em] ${isHistoricalRate ? "text-amber-400" : "text-slate-500"}`}
-              >
-                {isHistoricalRate ? "Fecha Valor: " : "Vigencia Live: "}{" "}
-                {displayDate}
-              </p>
-              <div className="flex items-center justify-center gap-2 relative z-10">
-                <span className="text-lg text-slate-400 font-medium">
+            {/* HERO CARD: TASA ACTIVA */}
+            <div className="mb-6 p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800/80 text-center shadow-inner relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  Tasa {buttonLabels[activeRate]}
+                </span>
+                <span
+                  className={`text-[10px] font-mono font-bold tracking-wider ${
+                    isHistoricalRate ? "text-amber-400" : "text-emerald-400"
+                  }`}
+                >
+                  {displayDate}
+                </span>
+              </div>
+
+              {/* VALOR DE LA TASA */}
+              <div className="flex items-baseline justify-center gap-2.5 my-2">
+                <span className="text-xs sm:text-sm text-slate-500 font-medium">
                   1 {activeRate === "euro" ? "€" : "$"} =
                 </span>
-                <span className="text-4xl font-black text-white tracking-tight">
+                <span className="text-4xl sm:text-5xl font-black text-white font-mono tracking-tight tabular-nums">
                   {new Intl.NumberFormat("de-DE", {
                     minimumFractionDigits: 2,
+                    maximumFractionDigits: 4,
                   }).format(rates[activeRate] || 0)}
                 </span>
+                <span className="text-lg sm:text-xl font-black text-emerald-400">Bs</span>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-white/5">
                 <button
                   onClick={handleCopyRate}
-                  className="p-1.5 rounded-xl hover:bg-emerald-500/20 text-slate-500 hover:text-emerald-400 transition-all active:scale-90"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800/60 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 text-[11px] font-medium transition-all active:scale-95"
                 >
-                  <ClipboardDocumentIcon className="h-5 w-5" />
+                  <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+                  <span>Copiar tasa</span>
                 </button>
-                <span className="text-lg font-extrabold text-slate-400">Bs</span>
               </div>
             </div>
 
+            {/* SELECTOR DE TASAS & FECHA HISTÓRICA */}
             <div className="flex items-center gap-2 mb-6">
-              <div className="flex-1 grid grid-cols-3 gap-1 bg-[#0f172a] p-1 rounded-xl">
-                {["bcv", "euro", "binance"].map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      setActiveRate(key);
-                      if (key === "binance" || key === "paralelo") {
-                        resetToToday();
-                      }
-                    }}
-                    className={`py-2 text-[10px] font-bold rounded-lg uppercase transition-all ${activeRate === key ? "bg-[#334155] text-emerald-400" : "text-slate-500 hover:text-white"}`}
-                  >
-                    {buttonLabels[key]}
-                  </button>
-                ))}
+              <div className="flex-1 grid grid-cols-3 gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+                {["bcv", "euro", "binance"].map((key) => {
+                  const isActive = activeRate === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setActiveRate(key);
+                        if (key === "binance") {
+                          resetToToday();
+                        }
+                      }}
+                      className={`py-2 text-[11px] font-bold rounded-lg uppercase tracking-wider transition-all ${
+                        isActive
+                          ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/80"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {buttonLabels[key]}
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="flex gap-2">
-                <div
+              {/* PICKER DE FECHA HISTÓRICA */}
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
                   onClick={() => {
                     try {
-                      dateInputRef.current?.showPicker();
-                    } catch (e) { }
+                      if (dateInputRef.current) {
+                        if (typeof dateInputRef.current.showPicker === "function") {
+                          dateInputRef.current.showPicker();
+                        } else {
+                          dateInputRef.current.focus();
+                        }
+                      }
+                    } catch (e) {
+                      dateInputRef.current?.focus();
+                    }
                   }}
-                  className={`relative flex items-center justify-center w-12 h-[42px] rounded-xl border transition-all cursor-pointer overflow-hidden ${isHistoricalRate ? "bg-amber-500/20 border-amber-500 text-amber-400" : "bg-[#0f172a] border-[#334155] text-slate-400 hover:border-emerald-500"}`}
+                  title="Consultar fecha histórica"
+                  className={`relative flex items-center justify-center w-11 h-10 rounded-xl border transition-all cursor-pointer overflow-hidden active:scale-95 ${
+                    isHistoricalRate
+                      ? "bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                      : "bg-slate-950/80 border-slate-800 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400"
+                  }`}
                 >
-                  <CalendarDaysIcon className="h-5 w-5 pointer-events-none relative z-0" />
+                  <CalendarDaysIcon className="h-5 w-5 pointer-events-none" />
                   <input
                     ref={dateInputRef}
                     type="date"
@@ -863,8 +864,6 @@ export default function CurrencyApp() {
                       const month = String(now.getMonth() + 1).padStart(2, "0");
                       const day = String(now.getDate()).padStart(2, "0");
                       const todayLocal = `${year}-${month}-${day}`;
-
-                      // Si la tasa oficial ya tiene una fecha (ej: mañana), permitimos seleccionarla
                       if (rates.fecha) {
                         const [d, m, y] = rates.fecha.split("/");
                         const rateDate = `${y}-${m}-${d}`;
@@ -872,15 +871,16 @@ export default function CurrencyApp() {
                       }
                       return todayLocal;
                     })()}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-                    style={{ fontSize: "16px" }}
+                    className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
+                    tabIndex={-1}
                   />
-                </div>
+                </button>
 
                 {isHistoricalRate && (
                   <button
                     onClick={resetToToday}
-                    className="flex items-center justify-center w-12 h-[42px] rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all"
+                    title="Volver a tasa de hoy"
+                    className="flex items-center justify-center w-11 h-10 rounded-xl border border-emerald-500/40 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 transition-all active:scale-95"
                   >
                     <ArrowPathIcon className="h-5 w-5" />
                   </button>
@@ -888,8 +888,10 @@ export default function CurrencyApp() {
               </div>
             </div>
 
-            <div className="space-y-6 flex-1">
-              <div className="w-full bg-slate-900/50 rounded-2xl border border-white/5 flex items-center p-4 focus-within:border-emerald-500/50 focus-within:bg-slate-900/80 transition-all shadow-inner group">
+            {/* SECCIÓN CONVERSORA */}
+            <div className="space-y-4 flex-1 flex flex-col">
+              {/* INPUT MONTO A CONVERTIR */}
+              <div className="w-full bg-slate-950/80 rounded-2xl border border-slate-800/80 flex items-center p-3.5 sm:p-4 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/20 transition-all shadow-inner">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -897,90 +899,97 @@ export default function CurrencyApp() {
                   onChange={handleAmountChange}
                   onPaste={handlePaste}
                   placeholder="0,00"
-                  className="flex-1 bg-transparent text-4xl font-mono text-white outline-none min-w-0 placeholder:text-slate-700"
+                  className="flex-1 bg-transparent text-3xl sm:text-4xl font-mono text-white outline-none min-w-0 placeholder:text-slate-700 tabular-nums"
                 />
-                <span className="text-sm text-slate-500 font-sans uppercase font-bold ml-2 shrink-0">
-                  {isForeignToVes
-                    ? activeRate === "euro"
-                      ? "EUR"
-                      : "USD"
-                    : "Bs"}
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 py-1 bg-slate-800/60 rounded-md shrink-0">
+                  {isForeignToVes ? (activeRate === "euro" ? "EUR" : "USD") : "Bs"}
                 </span>
               </div>
 
-              <div className="flex justify-center relative">
+              {/* BOTÓN INVERTIR (SWAP) */}
+              <div className="flex justify-center relative my-1">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-full h-px bg-white/5"></div>
+                  <div className="w-full h-px bg-slate-800"></div>
                 </div>
                 <button
                   onClick={handleInvert}
-                  className="relative z-10 bg-emerald-500 p-3.5 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:scale-110 active:scale-90 transition-all hover:bg-emerald-400 group"
+                  title="Invertir conversión"
+                  className="relative z-10 bg-gradient-to-r from-emerald-500 to-teal-400 p-3 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.35)] hover:scale-105 active:scale-95 transition-all text-slate-950 group"
                 >
-                  <ArrowsUpDownIcon className="h-6 w-6 text-slate-900 group-hover:rotate-180 transition-transform duration-500" />
+                  <ArrowsUpDownIcon className="h-5 w-5 group-hover:rotate-180 transition-transform duration-300" />
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4">
-                <div className="w-full bg-emerald-500/5 text-4xl font-mono text-emerald-400 p-6 rounded-2xl border border-emerald-500/20 flex justify-between items-center min-h-[100px] shadow-lg">
-                  <span className="truncate pr-2 font-black tracking-tighter">
+              {/* CAJA RESULTADO */}
+              <div className="w-full bg-gradient-to-br from-emerald-950/20 to-slate-950/80 p-4 sm:p-5 rounded-2xl border border-emerald-500/25 flex justify-between items-center shadow-lg">
+                <div className="flex flex-col truncate pr-2">
+                  <span className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider mb-1">
+                    Equivalente
+                  </span>
+                  <span className="text-3xl sm:text-4xl font-mono text-emerald-400 font-black tracking-tight truncate tabular-nums">
                     {formatCurrency(converted)}
                   </span>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <button
-                      onClick={handleCopySingleResult}
-                      className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 transition-all active:scale-90 border border-white/5"
-                    >
-                      <ClipboardDocumentIcon className="h-5 w-5" />
-                    </button>
-                    <span className="text-xs text-slate-500 font-sans uppercase font-black tracking-widest bg-slate-800/50 px-2 py-1 rounded">
-                      {isForeignToVes
-                        ? "Bs"
-                        : activeRate === "euro"
-                          ? "EUR"
-                          : "USD"}
-                    </span>
-                  </div>
                 </div>
-
-                <button
-                  onClick={handleShareImage}
-                  className="w-full h-[54px] bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg group"
-                >
-                  <ShareIcon className="h-5 w-5 group-hover:rotate-12 transition-transform" />
-                  <span className="text-sm font-black uppercase tracking-widest">
-                    Compartir
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handleCopySingleResult}
+                    title="Copiar resultado"
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 transition-all active:scale-90 border border-white/5"
+                  >
+                    <ClipboardDocumentIcon className="h-4 w-4" />
+                  </button>
+                  <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-2.5 py-1.5 rounded-lg border border-emerald-500/30">
+                    {isForeignToVes ? "Bs" : activeRate === "euro" ? "EUR" : "USD"}
                   </span>
-                </button>
+                </div>
               </div>
 
+              {/* BOTÓN COMPARTIR */}
+              <button
+                onClick={handleShareImage}
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white rounded-xl flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] shadow-lg shadow-blue-500/20 font-bold text-xs uppercase tracking-widest"
+              >
+                <ShareIcon className="h-4 w-4" />
+                <span>Compartir Cotización</span>
+              </button>
+
+              {/* BANNER A ANÁLISIS DIFERENCIAL */}
               <Link
                 href="/analisis"
-                className="group flex items-center gap-4 p-5 mt-10 bg-slate-900/40 hover:bg-blue-500/10 border border-white/5 hover:border-blue-500/30 rounded-[2rem] transition-all duration-500 shadow-xl"
+                className="group flex items-center gap-3.5 p-3.5 mt-auto bg-slate-950/60 hover:bg-blue-500/10 border border-slate-800 hover:border-blue-500/40 rounded-2xl transition-all duration-300"
               >
-                <div className="p-3.5 bg-slate-800 group-hover:bg-blue-600 rounded-2xl transition-all duration-500 shadow-lg group-hover:shadow-blue-500/20">
-                  <ChartBarIcon className="w-6 h-6 text-blue-400 group-hover:text-white" />
+                <div className="p-2.5 bg-slate-900 group-hover:bg-blue-600 rounded-xl transition-all shadow-md group-hover:shadow-blue-500/20">
+                  <ChartBarIcon className="w-5 h-5 text-blue-400 group-hover:text-white" />
                 </div>
-                <div className="text-left flex-1">
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white group-hover:text-blue-400 transition-colors">
+                <div className="text-left flex-1 min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-200 group-hover:text-blue-400 transition-colors">
                     Análisis Diferencial
                   </p>
-                  <p className="text-[9px] text-slate-500 uppercase mt-1 font-bold tracking-wider leading-relaxed">
-                    Conciliación inteligente de estados de cuenta
+                  <p className="text-[10px] text-slate-500 truncate">
+                    Conciliación inteligente de cuentas
                   </p>
                 </div>
               </Link>
             </div>
           </div>
         ) : (
-          <div className="animate-in fade-in duration-500">
-            <h2 className="text-xl font-black emerald-gradient-text mb-6 flex items-center gap-3 tracking-tight uppercase">
-              <CalendarDaysIcon className="h-6 w-6 text-emerald-500" /> Histórico Oficial BCV
-            </h2>
-            <div className="flex gap-3 mb-6">
+          /* VISTA HISTÓRICO */
+          <div className="flex-1 flex flex-col animate-slide-up">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-black emerald-gradient-text flex items-center gap-2 tracking-tight uppercase">
+                <CalendarDaysIcon className="h-5 w-5 text-emerald-400" /> Histórico Oficial BCV
+              </h2>
+              <span className="text-[10px] font-mono text-slate-500 bg-slate-900/60 px-2 py-0.5 rounded border border-white/5">
+                v2.0 Engine
+              </span>
+            </div>
+
+            {/* SELECTORES DE MES Y AÑO */}
+            <div className="flex gap-2 mb-4">
               <select
                 value={histMonth}
                 onChange={(e) => setHistMonth(parseInt(e.target.value))}
-                className="bg-slate-900/60 text-white p-3 rounded-xl border border-white/5 text-sm flex-1 outline-none cursor-pointer focus:border-emerald-500/50 transition-all font-bold uppercase tracking-widest"
+                className="bg-slate-950 text-white p-2.5 rounded-xl border border-slate-800 text-xs flex-1 outline-none cursor-pointer focus:border-emerald-500/50 transition-all font-bold uppercase tracking-wider"
               >
                 {[
                   "Enero",
@@ -994,7 +1003,7 @@ export default function CurrencyApp() {
                   "Septiembre",
                   "Octubre",
                   "Noviembre",
-                  "Diciembre",
+                  "DICIEMBRE",
                 ].map((m, i) => (
                   <option key={i} value={i + 1}>
                     {m}
@@ -1004,7 +1013,7 @@ export default function CurrencyApp() {
               <select
                 value={histYear}
                 onChange={(e) => setHistYear(parseInt(e.target.value))}
-                className="bg-slate-900/60 text-white p-3 rounded-xl border border-white/5 text-sm w-36 outline-none cursor-pointer focus:border-emerald-500/50 transition-all font-bold uppercase tracking-widest"
+                className="bg-slate-950 text-white p-2.5 rounded-xl border border-slate-800 text-xs w-28 outline-none cursor-pointer focus:border-emerald-500/50 transition-all font-bold uppercase tracking-wider"
               >
                 {yearsRange.map((y) => (
                   <option key={y} value={y}>
@@ -1013,43 +1022,52 @@ export default function CurrencyApp() {
                 ))}
               </select>
             </div>
+
+            {/* BOTÓN DE BÚSQUEDA */}
             <button
               onClick={fetchHistory}
-              className="w-full bg-[#059669] text-white py-3 rounded-xl font-bold mb-6 shadow-lg active:scale-95 transition-all hover:bg-emerald-600"
+              disabled={histLoading}
+              className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider mb-4 shadow-lg shadow-emerald-900/20 active:scale-95 transition-all disabled:opacity-50"
             >
-              {histLoading ? "Cargando..." : "Buscar Tasas Oficiales"}
+              {histLoading ? "Consultando Base de Datos..." : "Buscar Tasas Oficiales"}
             </button>
+
+            {/* RESULTADOS DEL HISTÓRICO */}
             {histData.length > 0 ? (
-              <div className="animate-in fade-in">
-                <div ref={chartRef} className="mb-4 bg-transparent pt-2">
+              <div className="flex-1 flex flex-col">
+                <div ref={chartRef} className="mb-3 bg-transparent">
                   <HistoryChart data={histData} />
                 </div>
-                <div className="overflow-y-auto max-h-[220px] mb-8 scrollbar-hide pr-1 rounded-2xl border border-white/5 bg-slate-900/20 shadow-inner">
-                  <table className="w-full text-sm text-left border-collapse">
-                    <thead className="text-[10px] text-slate-500 uppercase bg-slate-800/80 sticky top-0 z-20">
+
+                <div className="overflow-y-auto max-h-[200px] mb-4 custom-scrollbar rounded-xl border border-slate-800 bg-slate-950/60">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead className="text-[10px] text-slate-400 uppercase bg-slate-900/90 sticky top-0 z-20 border-b border-slate-800">
                       <tr>
-                        <th className="px-4 py-4 font-black tracking-widest">Fecha</th>
-                        <th className="px-4 py-4 text-right font-black tracking-widest">USD ($)</th>
-                        <th className="px-4 py-4 text-right font-black tracking-widest">EUR (€)</th>
+                        <th className="px-3 py-2.5 font-bold tracking-wider">Fecha</th>
+                        <th className="px-3 py-2.5 text-right font-bold tracking-wider text-emerald-400">USD ($)</th>
+                        <th className="px-3 py-2.5 text-right font-bold tracking-wider text-blue-400">EUR (€)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
                       {histData.map((row, idx) => (
                         <tr
                           key={idx}
-                          className={`hover:bg-slate-800/50 ${row.isWeekend ? "opacity-50 italic text-slate-500" : ""}`}
+                          className={`hover:bg-slate-800/40 transition-colors ${
+                            row.isWeekend ? "opacity-60 text-slate-400" : ""
+                          }`}
                         >
-                          <td className="px-3 py-2 font-mono text-[11px]">
+                          <td className="px-3 py-2 flex items-center gap-1.5">
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                row.isWeekend ? "bg-slate-600" : "bg-emerald-400"
+                              }`}
+                            ></span>
                             {row.fecha}
                           </td>
-                          <td
-                            className={`px-3 py-2 font-mono text-right font-bold ${row.isWeekend ? "" : "text-emerald-500"}`}
-                          >
+                          <td className="px-3 py-2 text-right font-bold text-slate-100 tabular-nums">
                             {row.usd.toFixed(2)}
                           </td>
-                          <td
-                            className={`px-3 py-2 font-mono text-right font-bold ${row.isWeekend ? "" : "text-blue-500"}`}
-                          >
+                          <td className="px-3 py-2 text-right font-bold text-slate-300 tabular-nums">
                             {row.euro.toFixed(2)}
                           </td>
                         </tr>
@@ -1057,51 +1075,54 @@ export default function CurrencyApp() {
                     </tbody>
                   </table>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+
+                {/* BOTONES DE EXPORTACIÓN */}
+                <div className="grid grid-cols-3 gap-2 mt-auto">
                   <button
                     onClick={exportToExcel}
-                    className="flex flex-col items-center p-3 bg-slate-900/40 rounded-2xl border border-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all group active:scale-90"
+                    className="flex flex-col items-center p-2.5 bg-slate-950/70 rounded-xl border border-slate-800 hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all active:scale-95 group"
                   >
-                    <ArrowDownTrayIcon className="h-6 w-6 text-emerald-500 mb-1.5 transition-transform group-hover:-translate-y-1" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-emerald-400">
+                    <ArrowDownTrayIcon className="h-5 w-5 text-emerald-400 mb-1 group-hover:-translate-y-0.5 transition-transform" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-400">
                       Excel
                     </span>
                   </button>
                   <button
                     onClick={exportToPDF}
-                    className="flex flex-col items-center p-3 bg-slate-900/40 rounded-2xl border border-white/5 hover:bg-red-500/10 hover:border-red-500/30 transition-all group active:scale-90"
+                    className="flex flex-col items-center p-2.5 bg-slate-950/70 rounded-xl border border-slate-800 hover:border-red-500/40 hover:bg-red-500/10 transition-all active:scale-95 group"
                   >
-                    <DocumentTextIcon className="h-6 w-6 text-red-500 mb-1.5 transition-transform group-hover:-translate-y-1" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-red-400">
+                    <DocumentTextIcon className="h-5 w-5 text-red-400 mb-1 group-hover:-translate-y-0.5 transition-transform" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-red-400">
                       PDF
                     </span>
                   </button>
                   <button
                     onClick={copyToClipboard}
-                    className="flex flex-col items-center p-3 bg-slate-900/40 rounded-2xl border border-white/5 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all group active:scale-90"
+                    className="flex flex-col items-center p-2.5 bg-slate-950/70 rounded-xl border border-slate-800 hover:border-blue-500/40 hover:bg-blue-500/10 transition-all active:scale-95 group"
                   >
-                    <ClipboardDocumentIcon className="h-6 w-6 text-blue-500 mb-1.5 transition-transform group-hover:-translate-y-1" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-blue-400">
+                    <ClipboardDocumentIcon className="h-5 w-5 text-blue-400 mb-1 group-hover:-translate-y-0.5 transition-transform" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-blue-400">
                       Copiar
                     </span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="w-full h-[250px] flex flex-col items-center justify-center border-2 border-dashed border-[#334155] rounded-2xl bg-[#0f172a]/30 p-8 text-center">
-                <ChartBarIcon className="h-12 w-12 text-slate-600 mb-4" />
-                <h3 className="text-slate-400 font-bold mb-2">Sin datos</h3>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest">
-                  Selecciona mes y busca
+              <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/40 p-6 text-center">
+                <ChartBarIcon className="h-10 w-10 text-slate-600 mb-3" />
+                <h3 className="text-slate-300 font-bold text-sm mb-1">Sin consulta activa</h3>
+                <p className="text-[11px] text-slate-500">
+                  Selecciona mes y año para cargar tasas de la base de datos
                 </p>
               </div>
             )}
           </div>
         )}
-        <div className="mt-auto pt-4 border-t border-[#334155]/30 text-center">
-          <p className="text-[10px] text-slate-600 font-mono uppercase tracking-[0.4em]">
-            © 2026 RYBAK.SOFTWARE
-          </p>
+
+        {/* PIE DE PÁGINA DISCRETO V2.0 */}
+        <div className="mt-5 pt-3 border-t border-slate-800/80 text-center flex items-center justify-between text-[10px] text-slate-500 font-mono">
+          <span className="text-emerald-400/80 font-bold">v2.0 • UltraFast</span>
+          <span className="tracking-widest uppercase">RYBAK.SOFTWARE © 2026</span>
         </div>
       </div>
     </div>

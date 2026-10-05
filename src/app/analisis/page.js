@@ -303,10 +303,13 @@ export default function AnalisisDiferencial() {
   };
 
   return (
-    <div className="p-4 md:p-8 text-white bg-[#0f172a] min-h-screen font-sans relative">
+    <div className="p-4 md:p-8 text-white min-h-screen font-sans relative">
       <div className="w-full max-w-4xl mx-auto flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <div className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </div>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hola, <span className="text-white italic">{user}</span></p>
         </div>
         <button onClick={handleLogoutClick} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-300 text-[10px] font-bold uppercase tracking-widest group animate-in slide-in-from-right-2 ${confirmLogout ? 'bg-amber-500 text-white border-amber-400 scale-105 shadow-lg shadow-amber-900/20' : 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'}`}>
@@ -315,17 +318,22 @@ export default function AnalisisDiferencial() {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <Link href="/" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-emerald-400 mb-6 transition-colors group">
-          <ArrowLeftIcon className="w-3 h-3 transform group-hover:-translate-x-1 transition-transform" /> Volver al Monitor
+        <Link href="/" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-emerald-400 mb-6 transition-colors group">
+          <ArrowLeftIcon className="w-3.5 h-3.5 transform group-hover:-translate-x-1 transition-transform" /> Volver al Monitor
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-black uppercase tracking-tighter text-emerald-400 italic">Análisis Diferencial</h1>
-          <p className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-bold mt-1">Modulo de analisis diferencial V1.1</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-black uppercase tracking-tight text-emerald-400">Análisis Diferencial</h1>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+              v2.0
+            </span>
+          </div>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-bold mt-1">Módulo de Auditoría y Conciliación Cambiaria</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <div className="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 shadow-xl min-h-[180px] flex flex-col justify-between transition-all hover:border-slate-600">
+          <div className="glass-card p-6 rounded-2xl shadow-xl min-h-[180px] flex flex-col justify-between transition-all">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4 block">1. Subir Estado de Cuenta</label>
               <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-600 file:text-white cursor-pointer bg-slate-900/50 rounded-xl border border-slate-800 p-2" />
@@ -339,9 +347,9 @@ export default function AnalisisDiferencial() {
             </div>
           </div>
 
-          <div className={`bg-[#1e293b] p-6 rounded-2xl border shadow-xl min-h-[180px] flex flex-col justify-between transition-all duration-300 ${data.length > 0 ? 'border-blue-500/30 opacity-100' : 'border-slate-700 opacity-40'}`}>
+          <div className={`glass-card p-6 rounded-2xl shadow-xl min-h-[180px] flex flex-col justify-between transition-all duration-300 ${data.length > 0 ? 'border-blue-500/40 opacity-100' : 'opacity-50'}`}>
             <label className="text-[10px] font-black uppercase text-blue-400 tracking-widest mb-4 block">2. Configurar Divisa de Análisis</label>
-            <select disabled={data.length === 0} value={moneda} onChange={(e) => handleCurrencyChange(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-bold text-white outline-none focus:border-blue-500 cursor-pointer disabled:cursor-not-allowed">
+            <select disabled={data.length === 0} value={moneda} onChange={(e) => handleCurrencyChange(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm font-bold text-white outline-none focus:border-blue-500 cursor-pointer disabled:cursor-not-allowed">
               <option value="usd">USD (BCV $)</option>
               <option value="euro">Euro (BCV €)</option>
             </select>
@@ -353,7 +361,7 @@ export default function AnalisisDiferencial() {
 
         {data.length > 0 && resumen && !loading && (
           <div className="space-y-10 animate-in fade-in duration-500">
-            <div className="bg-[#1e293b] rounded-3xl border border-slate-700 overflow-hidden shadow-2xl">
+            <div className="glass-card rounded-3xl overflow-hidden shadow-2xl">
               <table className="w-full text-xs text-left">
                 <thead className="bg-slate-800/80 text-[9px] uppercase font-black tracking-widest text-slate-500">
                   <tr><th className="p-4">Fecha Operación</th><th className="p-4 text-right">Tasa {moneda.toUpperCase()}</th><th className="p-4 text-right">Monto Bs.</th><th className="p-4 text-right">Valor {moneda === 'usd' ? '$' : '€'}</th></tr>

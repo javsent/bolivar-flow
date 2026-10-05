@@ -2,50 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
-/* --- DESIGN SYSTEM TOKENS --- */
+/* --- DESIGN SYSTEM TOKENS 2.0 --- */
 :root {
-  --app-bg: #0f172a;
-  --card-bg: rgba(30, 41, 59, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --app-bg: #070b14;
+  --card-bg: rgba(15, 23, 42, 0.75);
+  --card-border: rgba(255, 255, 255, 0.08);
   --emerald-accent: #10b981;
-  --emerald-glow: rgba(16, 185, 129, 0.2);
+  --emerald-glow: rgba(16, 185, 129, 0.25);
   --blue-accent: #3b82f6;
-  --blue-glow: rgba(59, 130, 246, 0.2);
+  --blue-glow: rgba(59, 130, 246, 0.25);
+  --cyan-accent: #38bdf8;
   --foreground-rgb: 255, 255, 255;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: var(--app-bg) !important;
-  /* App-like feel */
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+    radial-gradient(at 85% 20%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
+    radial-gradient(at 50% 90%, rgba(56, 189, 248, 0.05) 0px, transparent 60%);
+  background-attachment: fixed;
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
 }
 
-/* --- PREMIUM UTILITIES --- */
+/* --- PREMIUM UTILITIES 2.0 --- */
 
 .glass-card {
   background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.glass-card-subtle {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .emerald-gradient-text {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  background: linear-gradient(135deg, #2dd4bf 0%, #10b981 50%, #059669 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .blue-gradient-text {
-  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #2563eb 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.brand-gradient-text {
+  background: linear-gradient(135deg, #2dd4bf 0%, #38bdf8 50%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Tabular numbers for clean financial alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Interactive elements */
@@ -67,9 +91,8 @@ textarea {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -77,19 +100,18 @@ textarea {
 }
 
 @keyframes pulse-subtle {
-
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
+    transform: scale(1);
   }
-
   50% {
-    opacity: 0.7;
+    opacity: 0.75;
+    transform: scale(0.97);
   }
 }
 
 .animate-slide-up {
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-pulse-subtle {
@@ -107,7 +129,7 @@ textarea {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -116,7 +138,7 @@ textarea {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #334155;
-  border-radius: 100px;
+  border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -126,7 +148,7 @@ textarea {
 /* Mobile optimizations */
 @media (max-width: 640px) {
   .glass-card {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 }
