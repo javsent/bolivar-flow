@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import https from 'https';
+import { saveRate, getLatestOverallRate } from '@/lib/ratesRepository.js';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // 1. Inicializamos con objeto extendido para incluir la fecha
     let rates = {
       bcv: 0,
       euro: 0,
@@ -26,7 +28,7 @@ export async function GET() {
     // 1. BCV (OFICIAL) + EXTRACCIÓN DE FECHA VALOR
     // ==========================================
     try {
-      const { data: htmlBCV } = await axios.get('http://www.bcv.org.ve/', { httpsAgent: agent, headers, timeout: 10000 });
+      const { data: htmlBCV } = await axios.get('http://www.bcv.org.ve/', { httpsAgent: agent, headers, timeout: 8000 });
       const $bcv = cheerio.load(htmlBCV);
 
       const parseBCV = (selector) => {
@@ -38,12 +40,11 @@ export async function GET() {
       rates.bcv = parseBCV('#dolar');
       rates.euro = parseBCV('#euro');
 
-      // EXTRACCIÓN DE LA FECHA VALOR (El texto que dice "Fecha Valor: Miércoles, 25 Febrero 2026")
-      let fechaTexto = $bcv('.pull-right.dinamico span').text().trim() ||
-        $bcv('.date-display-single').text().trim();
+      // EXTRACCIÓN DE LA FECHA VALOR
+      let fechaTexto = $bcv('.pull-right.dinamico span').first().text().trim() ||
+        $bcv('.date-display-single').first().text().trim();
 
       if (fechaTexto) {
-        // Regex mejorada para manejar "de" (25 de febrero) o formato directo (25 febrero)
         const partes = fechaTexto.match(/(\d{1,2})\s+(de\s+)?(\w+)\s+(\d{4})/i);
         if (partes) {
           const meses = {
@@ -56,11 +57,11 @@ export async function GET() {
           const anio = partes[4];
           rates.fecha = `${dia}/${mes}/${anio}`;
         } else {
-          rates.fecha = fechaTexto; // Fallback
+          rates.fecha = fechaTexto;
         }
       }
 
-      console.log(`✅ BCV OK: USD=${rates.bcv}, Fecha Valor=${rates.fecha}`);
+      console.log(`✅ BCV OK: USD=${rates.bcv}, EUR=${rates.euro}, Fecha Valor=${rates.fecha}`);
     } catch (e) {
       console.error("❌ Error BCV:", e.message);
     }
@@ -77,28 +78,20 @@ export async function GET() {
     if (rates.bcv === 0 || rates.euro === 0 || rates.fecha !== todayStr) {
       console.log(`🔍 Intentando fallback con Exchange Monitor (Oficial)... [Motivo: ${rates.fecha !== todayStr ? "Fecha desactualizada" : "Tasa en 0"}]`);
       try {
-        const { data: htmlEM } = await axios.get('https://exchangemonitor.net/venezuela/dolar-bcv', { headers, timeout: 8000 });
+        const { data: htmlEM } = await axios.get('https://exchangemonitor.net/venezuela/dolar-bcv', { headers, timeout: 6000 });
         const $em = cheerio.load(htmlEM);
         
-        // 1. Intentar extraer del input de la calculadora (más preciso si está en el HTML)
         const emUSD_input = parseFloat($em('#input-amount-to').val()?.replace(',', '.') || '0');
-        
-        // 2. Extraer de la Meta Description o Title (Muy fiable en Exchange Monitor)
         const metaDesc = $em('meta[name="description"]').attr('content') || "";
         const ogDesc = $em('meta[property="og:description"]').attr('content') || "";
         const pageTitle = $em('title').text() || "";
         
         const extractFromText = (text) => {
            if (!text) return 0;
-           // Busca patrones como "446,80", "446.80", "es de 446,80", etc.
-           // Primero intentamos con el prefijo "de " o "en " que es muy común en EM
            const preciseMatch = text.match(/(?:es de|en|en\sBs\.|cotiza\sen)\s*([\d,.]+)/i);
            if (preciseMatch) return parseFloat(preciseMatch[1].replace(',', '.')) || 0;
-
-           // Fallback a cualquier número con formato de moneda (ej: 446,80)
            const generalMatch = text.match(/(\d{2,},\d{2})/);
            if (generalMatch) return parseFloat(generalMatch[1].replace(',', '.')) || 0;
-           
            return 0;
         };
 
@@ -109,7 +102,6 @@ export async function GET() {
 
         if (emUSD > 0) {
           rates.bcv = emUSD;
-          // Buscar Euro en la página
           $em('div, span, p, td, a').each((i, el) => {
              const txt = $em(el).text().toUpperCase();
              if (txt.includes('EURO') && (txt.includes('BS.') || txt.includes('VES'))) {
@@ -119,28 +111,21 @@ export async function GET() {
           });
         }
 
-        // 3. Si falla el euro, probar página específica
         if (rates.euro === 0 || rates.euro < rates.bcv) {
           try {
-             console.log("🔍 Consultando página específica de Euro BCV para precisión...");
-             const { data: htmlEM_EUR } = await axios.get('https://exchangemonitor.net/venezuela/euro-bcv', { headers, timeout: 5000 });
+             const { data: htmlEM_EUR } = await axios.get('https://exchangemonitor.net/venezuela/euro-bcv', { headers, timeout: 4000 });
              const $eur = cheerio.load(htmlEM_EUR);
-             
-             // Extraer del input (más preciso)
              const eurVal_input = parseFloat($eur('#input-amount-to').val()?.replace(',', '.') || '0');
-             
-             // Extraer de meta tags
              const metaEur = $eur('meta[name="description"]').attr('content') || $eur('meta[property="og:description"]').attr('content') || "";
              const eurVal_meta = extractFromText(metaEur);
-             
              const eurFinal = eurVal_input > 0 ? eurVal_input : eurVal_meta;
              if (eurFinal > 0) rates.euro = eurFinal;
-          } catch(e) { console.warn("⚠️ Falló scraping Euro EM"); }
+          } catch(e) { }
         }
 
         if (rates.bcv > 0) {
            console.log(`✅ Fallback EM OK: USD=${rates.bcv}, EUR=${rates.euro}`);
-           rates.fecha = todayStr; // Garantizamos que la fecha sea hoy ya que EM está al día
+           rates.fecha = todayStr;
         }
       } catch (e) {
         console.error("❌ Error Fallback EM:", e.message);
@@ -148,11 +133,39 @@ export async function GET() {
     }
 
     // ==========================================
-    // 3. EXCHANGE MONITOR (PARALELO Y BINANCE)
+    // 3. PERSISTENCIA INMEDIATA EN BASE DE DATOS
+    // ==========================================
+    if (rates.bcv > 0 && rates.fecha) {
+      try {
+        await saveRate({
+          fecha: rates.fecha,
+          usd: rates.bcv,
+          euro: rates.euro,
+          isWeekend: false,
+          source: 'Live-Sync'
+        });
+      } catch (dbErr) {
+        console.warn("⚠️ No se pudo persistir tasa en DB:", dbErr.message);
+      }
+    } else if (rates.bcv === 0) {
+      // Si todo scraping falló, rescatar la última tasa oficial de la base de datos
+      try {
+        const fallbackRate = await getLatestOverallRate();
+        if (fallbackRate) {
+          rates.bcv = fallbackRate.usd;
+          rates.euro = fallbackRate.euro;
+          rates.fecha = fallbackRate.fecha;
+          console.log(`📦 Rescatado de Base de Datos local: USD=${rates.bcv} (${rates.fecha})`);
+        }
+      } catch (dbResErr) { }
+    }
+
+    // ==========================================
+    // 4. EXCHANGE MONITOR (PARALELO Y BINANCE)
     // ==========================================
     const scrapeExchangeMonitor = async (url, label) => {
       try {
-        const response = await axios.get(url, { headers, timeout: 8000 });
+        const response = await axios.get(url, { headers, timeout: 6000 });
         const html = response.data;
         const $ = cheerio.load(html);
 
@@ -189,17 +202,16 @@ export async function GET() {
     if (precioBinance > 0) rates.binance = precioBinance;
 
     // ==========================================
-    // 4. RESPALDO FINAL (SOLO SI FALLA TODO)
+    // 5. RESPALDO FINAL (BINANCE)
     // ==========================================
     if (rates.binance === 0) {
       try {
-        const { data: dataApi } = await axios.get('https://ve.dolarapi.com/v1/dolares', { timeout: 5000 });
+        const { data: dataApi } = await axios.get('https://ve.dolarapi.com/v1/dolares', { timeout: 4000 });
         const promedio = dataApi.find(d => d.fuente === 'paralelo')?.promedio || 0;
         if (rates.binance === 0) rates.binance = promedio;
       } catch (e) { }
     }
 
-    // Si no pudimos obtener fecha del BCV, usamos la de hoy como último recurso
     if (!rates.fecha) {
       rates.fecha = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }

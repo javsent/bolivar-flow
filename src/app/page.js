@@ -278,50 +278,7 @@ export default function CurrencyApp() {
       const json = await res.json();
       const rawData = json.data || [];
 
-      if (rawData.length === 0) {
-        setHistData([]);
-        return;
-      }
-
-      const parseFecha = (str) => {
-        const [d, m, y] = str.split("/").map(Number);
-        return new Date(y, m - 1, d);
-      };
-
-      const lastEntryDate = rawData.reduce((max, entry) => {
-        const d = parseFecha(entry.fecha);
-        return d > max ? d : max;
-      }, parseFecha(rawData[0].fecha));
-
-      const filledData = [];
-      let lastValidUsd = rawData[0].usd;
-      let lastValidEuro = rawData[0].euro;
-
-      const stopDay = lastEntryDate.getDate();
-
-      for (let day = 1; day <= stopDay; day++) {
-        const currentSearchDate = new Date(histYear, histMonth - 1, day);
-        const loopDay = String(currentSearchDate.getDate()).padStart(2, "0");
-        const loopMonth = String(currentSearchDate.getMonth() + 1).padStart(2, "0");
-        const dayStr = `${loopDay}/${loopMonth}/${currentSearchDate.getFullYear()}`;
-
-        const entry = rawData.find((d) => d.fecha === dayStr);
-
-        if (entry) {
-          lastValidUsd = entry.usd;
-          lastValidEuro = entry.euro;
-          filledData.push({ ...entry });
-        } else {
-          filledData.push({
-            fecha: dayStr,
-            usd: lastValidUsd,
-            euro: lastValidEuro,
-            isWeekend: true,
-          });
-        }
-      }
-
-      setHistData(filledData.reverse());
+      setHistData(rawData);
     } catch (err) {
       console.error(err);
     } finally {
