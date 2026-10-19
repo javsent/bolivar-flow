@@ -14,7 +14,7 @@ export default function LoginView() {
     const [showLegacyLogin, setShowLegacyLogin] = useState(false);
     const googleBtnRef = useRef(null);
 
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "173592708065-1m316mss15guub2csg0f4jkhuoea0fct.apps.googleusercontent.com";
 
     const handleGoogleCallback = async (response) => {
         if (!response.credential) return;
@@ -38,6 +38,9 @@ export default function LoginView() {
                     cancel_on_tap_outside: true,
                 });
 
+                // Limpiar cualquier render previo antes de renderizar
+                googleBtnRef.current.innerHTML = '';
+
                 window.google.accounts.id.renderButton(googleBtnRef.current, {
                     theme: 'filled_black',
                     size: 'large',
@@ -54,6 +57,19 @@ export default function LoginView() {
 
     useEffect(() => {
         initGoogleBtn();
+        // Por si el script de Google tarda unos milisegundos en estar disponible
+        const timer = setInterval(() => {
+            if (window.google?.accounts?.id && googleBtnRef.current && !googleBtnRef.current.hasChildNodes()) {
+                initGoogleBtn();
+            }
+        }, 400);
+
+        const timeout = setTimeout(() => clearInterval(timer), 4000);
+
+        return () => {
+            clearInterval(timer);
+            clearTimeout(timeout);
+        };
     }, [clientId]);
 
     const handleSubmit = (e) => {
