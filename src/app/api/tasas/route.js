@@ -3,6 +3,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import https from 'https';
 import { saveRate, getLatestOverallRate } from '@/lib/ratesRepository.js';
+import { getVenezuelaDate } from '@/lib/db.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,11 +67,11 @@ export async function GET() {
       console.error("❌ Error BCV:", e.message);
     }
 
-    // 0. OBTENER FECHA DE HOY (SISTEMA)
-    const now = new Date();
-    const fd = String(now.getDate()).padStart(2, '0');
-    const fm = String(now.getMonth() + 1).padStart(2, '0');
-    const todayStr = `${fd}/${fm}/${now.getFullYear()}`;
+    // 0. OBTENER FECHA DE HOY (HORA VENEZUELA, UTC-4)
+    const nowVET = getVenezuelaDate();
+    const fd = String(nowVET.getDate()).padStart(2, '0');
+    const fm = String(nowVET.getMonth() + 1).padStart(2, '0');
+    const todayStr = `${fd}/${fm}/${nowVET.getFullYear()}`;
 
     // ==========================================
     // 2. FALLBACK: EXCHANGE MONITOR (OFICIAL BCV)
@@ -125,7 +126,7 @@ export async function GET() {
 
         if (rates.bcv > 0) {
            console.log(`✅ Fallback EM OK: USD=${rates.bcv}, EUR=${rates.euro}`);
-           rates.fecha = todayStr;
+           if (!rates.fecha) rates.fecha = todayStr;
         }
       } catch (e) {
         console.error("❌ Error Fallback EM:", e.message);
@@ -137,11 +138,12 @@ export async function GET() {
     // ==========================================
     if (rates.bcv > 0 && rates.fecha) {
       try {
+        const dow = nowVET.getDay();
         await saveRate({
           fecha: rates.fecha,
           usd: rates.bcv,
           euro: rates.euro,
-          isWeekend: false,
+          isWeekend: (dow === 0 || dow === 6),
           source: 'Live-Sync'
         });
       } catch (dbErr) {
@@ -213,7 +215,7 @@ export async function GET() {
     }
 
     if (!rates.fecha) {
-      rates.fecha = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      rates.fecha = `${fd}/${fm}/${nowVET.getFullYear()}`;
     }
 
     return NextResponse.json(rates, {

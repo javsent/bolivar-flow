@@ -1902,6 +1902,104 @@
   ],
   "10": [
     {
+      "fecha": "19/10/2026",
+      "usd": 881.0664,
+      "euro": 991.16445734,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "18/10/2026",
+      "usd": 880.1159,
+      "euro": 985.729808,
+      "isWeekend": true,
+      "source": "Fill-Forward"
+    },
+    {
+      "fecha": "17/10/2026",
+      "usd": 880.1159,
+      "euro": 985.729808,
+      "isWeekend": true,
+      "source": "Fill-Forward"
+    },
+    {
+      "fecha": "16/10/2026",
+      "usd": 880.1159,
+      "euro": 985.729808,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "15/10/2026",
+      "usd": 879.1225,
+      "euro": 977.68092347,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "14/10/2026",
+      "usd": 877.9023,
+      "euro": 982.75895071,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "13/10/2026",
+      "usd": 876.7976,
+      "euro": 982.00454402,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "12/10/2026",
+      "usd": 875.6505,
+      "euro": 980.61472543,
+      "isWeekend": true,
+      "source": "Fill-Forward"
+    },
+    {
+      "fecha": "11/10/2026",
+      "usd": 875.6505,
+      "euro": 980.61472543,
+      "isWeekend": true,
+      "source": "Fill-Forward"
+    },
+    {
+      "fecha": "10/10/2026",
+      "usd": 875.6505,
+      "euro": 980.61472543,
+      "isWeekend": true,
+      "source": "Fill-Forward"
+    },
+    {
+      "fecha": "09/10/2026",
+      "usd": 875.6505,
+      "euro": 980.61472543,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "08/10/2026",
+      "usd": 874.7321,
+      "euro": 979.0788922,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "07/10/2026",
+      "usd": 873.867,
+      "euro": 984.26261811,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "06/10/2026",
+      "usd": 872.3927,
+      "euro": 977.21940683,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
       "fecha": "05/10/2026",
       "usd": 871.3689,
       "euro": 981.17880877,

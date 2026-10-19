@@ -8,7 +8,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
   title: "Bolívar Flow",
   description: "Monitor de Tasas de Cambio - Rybak Software",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 

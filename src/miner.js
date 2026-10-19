@@ -3,10 +3,12 @@ const cheerio = require('cheerio');
 const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 const { createClient } = require('@libsql/client');
 
 // Bypass SSL para BCV
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 const URL_BASE = 'https://www.bcv.org.ve/estadisticas/tipo-cambio-de-referencia-smc';
 const DOMAIN = 'https://www.bcv.org.ve';
@@ -30,7 +32,8 @@ async function runMiner() {
             try {
                 const { data: html } = await axios.get(urlConPaginacion, { 
                     headers: { 'User-Agent': 'Mozilla/5.0' },
-                    timeout: 15000
+                    timeout: 15000,
+                    httpsAgent
                 });
                 const $ = cheerio.load(html);
                 
@@ -78,7 +81,8 @@ async function runMiner() {
                 const response = await axios.get(link, { 
                     responseType: 'arraybuffer',
                     timeout: 45000,
-                    headers: { 'User-Agent': 'Mozilla/5.0' }
+                    headers: { 'User-Agent': 'Mozilla/5.0' },
+                    httpsAgent
                 });
                 const workbook = XLSX.read(response.data, { type: 'buffer' });
 
@@ -193,11 +197,20 @@ async function runMiner() {
             console.log(`✅ Archivo JSON generado: src/data/bcv/${year}.json`);
         }
 
-        // 2. Guardar en SQLite
-        const dataDir = path.join(process.cwd(), 'data');
-        if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-        const dbPath = path.join(dataDir, 'bolivar_flow.db').replace(/\\/g, '/');
-        const db = createClient({ url: `file:${dbPath}` });
+        // 2. Guardar en SQLite o DB Remota (Turso)
+        let db;
+        if (process.env.DATABASE_URL) {
+            console.log("🔗 Conectando a base de datos remota configurada en DATABASE_URL...");
+            db = createClient({
+                url: process.env.DATABASE_URL,
+                authToken: process.env.DATABASE_AUTH_TOKEN || undefined,
+            });
+        } else {
+            const dataDir = path.join(process.cwd(), 'data');
+            if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+            const dbPath = path.join(dataDir, 'bolivar_flow.db').replace(/\\/g, '/');
+            db = createClient({ url: `file:${dbPath}` });
+        }
 
         await db.execute(`
             CREATE TABLE IF NOT EXISTS rates (

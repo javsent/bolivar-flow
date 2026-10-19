@@ -17,6 +17,8 @@ import {
   ArrowPathIcon,
   ShareIcon,
   SparklesIcon,
+  ChevronDownIcon,
+  CheckIcon,
 } from "@heroicons/react/24/solid";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -27,7 +29,7 @@ import { useAuth } from "@/context/AuthContext";
 import { formatCurrency } from "@/lib/utils";
 
 export default function CurrencyApp() {
-  const { user, logout } = useAuth();
+  const { user, userData, userSettings, saveSettings, logout } = useAuth();
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   // --- ESTADOS UX (Toast) ---
@@ -61,10 +63,17 @@ export default function CurrencyApp() {
   const [histData, setHistData] = useState([]);
   const [histLoading, setHistLoading] = useState(false);
 
+  // --- ESTADOS CONCEPTO (v2.1) ---
+  const [conceptoOpen, setConceptoOpen] = useState(false);
+  const [conceptoTemplate, setConceptoTemplate] = useState(
+    "Pago de $usd $divisa equivalente a Bs. $bs, según tasa $fuente $tasa del $fecha."
+  );
+  const [conceptoCopied, setConceptoCopied] = useState(false);
+  const conceptoInputRef = useRef(null);
+
   const buttonLabels = {
     bcv: "BCV $",
     euro: "BCV €",
-    binance: "Binance",
   };
   const currentYear = new Date().getFullYear();
   const yearsRange = Array.from(
@@ -90,6 +99,23 @@ export default function CurrencyApp() {
   useEffect(() => {
     resetToToday();
   }, []);
+
+  // Sincronizar plantilla desde la base de datos (settings de usuario)
+  useEffect(() => {
+    if (userSettings?.concepto_template) {
+      setConceptoTemplate(userSettings.concepto_template);
+    }
+  }, [userSettings?.concepto_template]);
+
+  // Guardar cambios de plantilla en la base de datos con debounce
+  const templateSaveTimeout = useRef(null);
+  const handleConceptoChange = (newVal) => {
+    setConceptoTemplate(newVal);
+    if (templateSaveTimeout.current) clearTimeout(templateSaveTimeout.current);
+    templateSaveTimeout.current = setTimeout(() => {
+      saveSettings({ concepto_template: newVal });
+    }, 1000);
+  };
 
   // --- FUNCIÓN PARA RESETEAR A HOY (LIVE) ---
   const resetToToday = () => {
@@ -225,10 +251,6 @@ export default function CurrencyApp() {
   const handleDateChange = async (e) => {
     const newDate = e.target.value;
     if (!newDate) return;
-    if (activeRate === "binance") {
-      showToast("Historial solo disponible para tasas oficiales");
-      return;
-    }
     setSelectedDate(newDate);
     setLoading(true);
     try {
@@ -330,6 +352,76 @@ export default function CurrencyApp() {
     }).format(currentRate);
     navigator.clipboard.writeText(textToCopy);
     showToast(`Tasa ${buttonLabels[activeRate]} copiada`);
+  };
+
+  // --- LÓGICA CONCEPTO (v2.1) ---
+  const getConceptoVars = () => {
+    const currentRate = rates[activeRate] || 0;
+    const formattedRate = new Intl.NumberFormat("de-DE", {
+      minimumFractionDigits: 2,
+    }).format(currentRate);
+    const usdVal = isForeignToVes
+      ? amount || "0"
+      : converted
+      ? formatCurrency(converted)
+      : "0";
+    const bsVal = isForeignToVes
+      ? converted
+        ? formatCurrency(converted)
+        : "0"
+      : amount || "0";
+    const currencyName = activeRate === "euro" ? "EUR" : "USD";
+    const sourceLabel =
+      activeRate === "euro"
+        ? "BCV Euro"
+        : "BCV";
+
+    return {
+      $usd: usdVal,
+      $bs: bsVal,
+      $tasa: formattedRate,
+      $fuente: sourceLabel,
+      $divisa: currencyName,
+      $moneda: currencyName,
+      $fecha: displayDate || "hoy",
+    };
+  };
+
+  const insertConceptoVar = (varName) => {
+    const ta = conceptoInputRef.current;
+    if (!ta) {
+      handleConceptoChange(conceptoTemplate + " " + varName);
+      return;
+    }
+    const start = ta.selectionStart ?? conceptoTemplate.length;
+    const end = ta.selectionEnd ?? conceptoTemplate.length;
+    const before = conceptoTemplate.substring(0, start);
+    const after = conceptoTemplate.substring(end);
+    const nextVal = before + varName + after;
+    handleConceptoChange(nextVal);
+
+    setTimeout(() => {
+      ta.focus();
+      const pos = start + varName.length;
+      ta.setSelectionRange(pos, pos);
+    }, 10);
+  };
+
+  const getResolvedConceptoText = () => {
+    const vars = getConceptoVars();
+    return conceptoTemplate.replace(
+      /(\$usd|\$bs|\$tasa|\$fuente|\$divisa|\$moneda|\$fecha)/g,
+      (match) => vars[match] || match
+    );
+  };
+
+  const handleCopyConcepto = () => {
+    const resolved = getResolvedConceptoText();
+    navigator.clipboard.writeText(resolved).then(() => {
+      setConceptoCopied(true);
+      showToast("Concepto copiado");
+      setTimeout(() => setConceptoCopied(false), 2000);
+    });
   };
 
   // --- GENERACIÓN DE IMAGEN PARA COMPARTIR ---
@@ -656,11 +748,20 @@ export default function CurrencyApp() {
       {/* TOP USER BAR */}
       <div className="w-full max-w-md flex items-center justify-between mb-3 px-2">
         <div className="flex items-center gap-2">
-          <div className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-          </div>
-          <p className="text-[11px] font-bold text-slate-400 tracking-wider">
+          {userData?.avatar ? (
+            <img
+              src={userData.avatar}
+              alt={user || "Avatar"}
+              className="w-5 h-5 rounded-full border border-[#3ddc97]/40 object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </div>
+          )}
+          <p className="text-[11px] font-bold text-slate-400 tracking-wider truncate max-w-[220px]">
             Hola, <span className="text-white">{user}</span>
           </p>
         </div>
@@ -685,39 +786,39 @@ export default function CurrencyApp() {
       </div>
 
       {/* SELECTOR DE VISTA SUPERIOR (CALC / HISTORIAL) */}
-      <div className="w-full max-w-md glass-card-subtle p-1 rounded-2xl mb-3.5 flex relative z-20">
+      <div className="w-full max-w-md glass-card-subtle p-1 rounded-2xl mb-3 flex relative z-20">
         <button
           onClick={() => setView("calculator")}
-          className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+          className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
             view === "calculator"
-              ? "bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-white border border-emerald-500/30 shadow-lg shadow-emerald-500/5"
-              : "text-slate-400 hover:text-white"
+              ? "bg-[#3ddc97]/15 text-[#3ddc97] border border-[#3ddc97]/30 shadow-md shadow-[#3ddc97]/5"
+              : "text-slate-400 hover:text-white border border-transparent"
           }`}
         >
-          <CalculatorIcon className={`h-4 w-4 ${view === "calculator" ? "text-emerald-400" : ""}`} />
+          <CalculatorIcon className={`h-4 w-4 ${view === "calculator" ? "text-[#3ddc97]" : ""}`} />
           Calculadora
         </button>
         <button
           onClick={() => setView("history")}
-          className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+          className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
             view === "history"
-              ? "bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-white border border-emerald-500/30 shadow-lg shadow-emerald-500/5"
-              : "text-slate-400 hover:text-white"
+              ? "bg-[#5ba8e5]/15 text-[#5ba8e5] border border-[#5ba8e5]/30 shadow-md shadow-[#5ba8e5]/5"
+              : "text-slate-400 hover:text-white border border-transparent"
           }`}
         >
-          <CalendarDaysIcon className={`h-4 w-4 ${view === "history" ? "text-emerald-400" : ""}`} />
+          <CalendarDaysIcon className={`h-4 w-4 ${view === "history" ? "text-[#5ba8e5]" : ""}`} />
           Histórico
         </button>
       </div>
 
-      {/* CONTENEDOR PRINCIPAL */}
-      <div className="w-full max-w-md glass-card p-6 sm:p-7 rounded-3xl min-h-[560px] relative z-10 flex flex-col shadow-2xl animate-slide-up">
+      {/* CONTENEDOR PRINCIPAL RESPONSIVO */}
+      <div className="w-full max-w-md glass-card p-4 sm:p-6 rounded-3xl min-h-[540px] relative z-10 flex flex-col shadow-2xl animate-slide-up">
         {view === "calculator" ? (
           <div className="flex-1 flex flex-col">
-            {/* HEADER CON LOGO OFICIAL Y BADGE V2.0 */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-2.5">
-                <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-emerald-500/30 bg-[#070b14] flex items-center justify-center shadow-lg shadow-emerald-500/10">
+            {/* HEADER CON LOGO OFICIAL Y BADGE V2.1 */}
+            <div className="flex justify-between items-center mb-4 sm:mb-5">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden border border-[#3ddc97]/30 bg-[#0d1527] flex items-center justify-center shadow-lg shadow-[#3ddc97]/10 shrink-0">
                   <Image
                     src="/logo.png"
                     alt="Bolívar Flow"
@@ -728,108 +829,133 @@ export default function CurrencyApp() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-black uppercase tracking-tight leading-none">
-                      <span className="emerald-gradient-text">BOLÍVAR</span>{" "}
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none">
+                      <span className="brand-gradient-text">BOLÍVAR</span>{" "}
                       <span className="blue-gradient-text">FLOW</span>
                     </h1>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black tracking-wider bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono font-black tracking-wider bg-[#3ddc97]/15 border border-[#3ddc97]/30 text-[#3ddc97]">
                       v2.0
                     </span>
                   </div>
-                  <span className="text-[9px] text-slate-400 uppercase tracking-[0.25em] font-semibold mt-0.5">
+                  <span className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-semibold mt-0.5">
                     Monitor Cambiario
                   </span>
                 </div>
               </div>
 
               <div
-                className={`px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 ${
+                className={`px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 shrink-0 ${
                   isHistoricalRate
                     ? "bg-amber-500/10 text-amber-400 border-amber-500/40"
-                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/40"
+                    : "bg-[#3ddc97]/10 text-[#3ddc97] border-[#3ddc97]/40"
                 }`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    isHistoricalRate ? "bg-amber-400" : "bg-emerald-400 animate-pulse"
+                    isHistoricalRate ? "bg-amber-400" : "bg-[#3ddc97] animate-pulse"
                   }`}
                 ></span>
                 {isHistoricalRate ? "HISTÓRICO" : "LIVE"}
               </div>
             </div>
 
-            {/* HERO CARD: TASA ACTIVA */}
-            <div className="mb-6 p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800/80 text-center shadow-inner relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
-
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  Tasa {buttonLabels[activeRate]}
+            {/* HERO CARD: V2.1 DESIGN GUIDE */}
+            <div className="mb-4 p-4 sm:p-5 rounded-3xl hero-gradient-card text-left relative overflow-hidden group">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-widest">
+                  Tasa Oficial {buttonLabels[activeRate]}
                 </span>
                 <span
-                  className={`text-[10px] font-mono font-bold tracking-wider ${
-                    isHistoricalRate ? "text-amber-400" : "text-emerald-400"
+                  className={`text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full border ${
+                    isHistoricalRate
+                      ? "text-amber-400 bg-amber-400/10 border-amber-400/30"
+                      : "text-[#3ddc97] bg-[#3ddc97]/10 border-[#3ddc97]/30"
                   }`}
                 >
-                  {displayDate}
+                  {isHistoricalRate ? "HISTÓRICO" : "VIGENTE"}
                 </span>
               </div>
 
               {/* VALOR DE LA TASA */}
-              <div className="flex items-baseline justify-center gap-2.5 my-2">
-                <span className="text-xs sm:text-sm text-slate-500 font-medium">
-                  1 {activeRate === "euro" ? "€" : "$"} =
-                </span>
-                <span className="text-4xl sm:text-5xl font-black text-white font-mono tracking-tight tabular-nums">
+              <div className="flex items-baseline gap-2 my-1">
+                <span className="text-4xl sm:text-5xl font-black text-white font-mono tracking-tight tabular-nums leading-none">
                   {new Intl.NumberFormat("de-DE", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 4,
                   }).format(rates[activeRate] || 0)}
                 </span>
-                <span className="text-lg sm:text-xl font-black text-emerald-400">Bs</span>
+                <span className="text-sm sm:text-base font-semibold text-slate-400">
+                  Bs/{activeRate === "euro" ? "€" : "$"}
+                </span>
               </div>
 
-              <div className="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-white/5">
+              {/* BADGE ROW CON DETALLES */}
+              <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/5">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 bg-[#3ddc97]/15 border border-[#3ddc97]/30 text-[#3ddc97] rounded-full px-2.5 py-0.5 text-[10px] font-bold">
+                    ▲ Oficial BCV
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {displayDate}
+                  </span>
+                </div>
                 <button
                   onClick={handleCopyRate}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800/60 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 text-[11px] font-medium transition-all active:scale-95"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900/70 hover:bg-[#3ddc97]/20 text-slate-300 hover:text-[#3ddc97] text-[10px] font-medium transition-all active:scale-95 border border-white/5"
                 >
-                  <ClipboardDocumentIcon className="h-3.5 w-3.5" />
-                  <span>Copiar tasa</span>
+                  <ClipboardDocumentIcon className="h-3 w-3" />
+                  <span>Copiar</span>
                 </button>
+              </div>
+
+              {/* SPARKLINE DECORATIVO V2.1 */}
+              <div className="w-full h-8 mt-2 relative opacity-60">
+                <svg viewBox="0 0 340 32" preserveAspectRatio="none" className="w-full h-full">
+                  <defs>
+                    <linearGradient id="heroSpark" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3ddc97" stopOpacity="0.3"/>
+                      <stop offset="100%" stopColor="#3ddc97" stopOpacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,26 C30,24 60,20 100,21 C140,22 180,16 220,14 C260,11 300,12 340,6" stroke="#3ddc97" strokeWidth="2" fill="none" strokeLinecap="round" />
+                  <path d="M0,26 C30,24 60,20 100,21 C140,22 180,16 220,14 C260,11 300,12 340,6 L340,32 L0,32 Z" fill="url(#heroSpark)" />
+                  <circle cx="340" cy="6" r="3" fill="#3ddc97" />
+                </svg>
               </div>
             </div>
 
             {/* SELECTOR DE TASAS & FECHA HISTÓRICA */}
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex-1 grid grid-cols-3 gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
-                {["bcv", "euro", "binance"].map((key) => {
+            <div className="flex items-center gap-2 mb-3.5">
+              <div className="flex-1 grid grid-cols-2 gap-1 bg-[#0d1527]/90 p-1 rounded-xl border border-white/10">
+                {[
+                  { key: "bcv", label: "BCV $", val: rates.bcv },
+                  { key: "euro", label: "BCV €", val: rates.euro },
+                ].map(({ key, label, val }) => {
                   const isActive = activeRate === key;
                   return (
                     <button
                       key={key}
-                      onClick={() => {
-                        setActiveRate(key);
-                        if (key === "binance") {
-                          resetToToday();
-                        }
-                      }}
-                      className={`py-2 text-[11px] font-bold rounded-lg uppercase tracking-wider transition-all ${
+                      onClick={() => setActiveRate(key)}
+                      className={`py-1.5 px-2 text-center rounded-lg transition-all ${
                         isActive
-                          ? "bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/80"
-                          : "text-slate-400 hover:text-white"
+                          ? "bg-[#3ddc97]/15 border border-[#3ddc97]/40 text-[#3ddc97] shadow-sm"
+                          : "text-slate-400 hover:text-white bg-transparent border border-transparent"
                       }`}
                     >
-                      {buttonLabels[key]}
+                      <span className="block text-[11px] font-bold uppercase tracking-wider leading-none">
+                        {label}
+                      </span>
+                      <span className="block text-[10px] font-mono mt-0.5 opacity-90 tabular-nums truncate">
+                        {val ? new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2 }).format(val) : "---"}
+                      </span>
                     </button>
                   );
                 })}
               </div>
 
               {/* PICKER DE FECHA HISTÓRICA */}
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -846,13 +972,13 @@ export default function CurrencyApp() {
                     }
                   }}
                   title="Consultar fecha histórica"
-                  className={`relative flex items-center justify-center w-11 h-10 rounded-xl border transition-all cursor-pointer overflow-hidden active:scale-95 ${
+                  className={`relative flex items-center justify-center w-10 h-10 rounded-xl border transition-all cursor-pointer overflow-hidden active:scale-95 ${
                     isHistoricalRate
                       ? "bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
-                      : "bg-slate-950/80 border-slate-800 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400"
+                      : "bg-[#0d1527]/90 border-white/10 text-slate-400 hover:border-[#3ddc97]/50 hover:text-[#3ddc97]"
                   }`}
                 >
-                  <CalendarDaysIcon className="h-5 w-5 pointer-events-none" />
+                  <CalendarDaysIcon className="h-4 w-4 pointer-events-none" />
                   <input
                     ref={dateInputRef}
                     type="date"
@@ -880,18 +1006,25 @@ export default function CurrencyApp() {
                   <button
                     onClick={resetToToday}
                     title="Volver a tasa de hoy"
-                    className="flex items-center justify-center w-11 h-10 rounded-xl border border-emerald-500/40 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 transition-all active:scale-95"
+                    className="flex items-center justify-center w-10 h-10 rounded-xl border border-[#3ddc97]/40 bg-[#3ddc97]/15 text-[#3ddc97] hover:bg-[#3ddc97] hover:text-slate-950 transition-all active:scale-95"
                   >
-                    <ArrowPathIcon className="h-5 w-5" />
+                    <ArrowPathIcon className="h-4 w-4" />
                   </button>
                 )}
               </div>
             </div>
 
-            {/* SECCIÓN CONVERSORA */}
-            <div className="space-y-4 flex-1 flex flex-col">
+            {/* SECCIÓN CONVERSORA CARD */}
+            <div className="bg-[#0d1527]/75 backdrop-blur-md rounded-2xl border border-white/10 p-3 sm:p-4 mb-3 shadow-lg">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">
+                Convertidor Rápido
+              </span>
+
               {/* INPUT MONTO A CONVERTIR */}
-              <div className="w-full bg-slate-950/80 rounded-2xl border border-slate-800/80 flex items-center p-3.5 sm:p-4 focus-within:border-emerald-500/50 focus-within:ring-1 focus-within:ring-emerald-500/20 transition-all shadow-inner">
+              <div className="w-full bg-slate-950/70 rounded-xl border border-white/10 flex items-center p-2.5 sm:p-3 focus-within:border-[#3ddc97]/50 transition-all">
+                <div className="w-7 h-7 rounded-full bg-[#5ba8e5]/15 border border-[#5ba8e5]/30 flex items-center justify-center text-xs font-bold text-[#8dc5f0] mr-2 shrink-0">
+                  {isForeignToVes ? (activeRate === "euro" ? "€" : "$") : "Bs"}
+                </div>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -899,76 +1032,199 @@ export default function CurrencyApp() {
                   onChange={handleAmountChange}
                   onPaste={handlePaste}
                   placeholder="0,00"
-                  className="flex-1 bg-transparent text-3xl sm:text-4xl font-mono text-white outline-none min-w-0 placeholder:text-slate-700 tabular-nums"
+                  className="flex-1 bg-transparent text-2xl sm:text-3xl font-mono text-white outline-none min-w-0 placeholder:text-slate-700 tabular-nums"
                 />
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 py-1 bg-slate-800/60 rounded-md shrink-0">
-                  {isForeignToVes ? (activeRate === "euro" ? "EUR" : "USD") : "Bs"}
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-800/80 rounded shrink-0">
+                  {isForeignToVes ? (activeRate === "euro" ? "EUR" : "USD") : "VES"}
                 </span>
               </div>
 
               {/* BOTÓN INVERTIR (SWAP) */}
-              <div className="flex justify-center relative my-1">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-full h-px bg-slate-800"></div>
-                </div>
+              <div className="flex justify-center items-center my-2 gap-3">
+                <div className="flex-1 h-px bg-white/5"></div>
                 <button
                   onClick={handleInvert}
-                  title="Invertir conversión"
-                  className="relative z-10 bg-gradient-to-r from-emerald-500 to-teal-400 p-3 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.35)] hover:scale-105 active:scale-95 transition-all text-slate-950 group"
+                  title="Invertir monedas"
+                  className="w-8 h-8 rounded-full bg-[#5ba8e5]/15 border border-[#5ba8e5]/30 flex items-center justify-center text-[#5ba8e5] hover:bg-[#5ba8e5] hover:text-slate-950 transition-all active:scale-95 group"
                 >
-                  <ArrowsUpDownIcon className="h-5 w-5 group-hover:rotate-180 transition-transform duration-300" />
+                  <ArrowsUpDownIcon className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300" />
                 </button>
+                <div className="flex-1 h-px bg-white/5"></div>
               </div>
 
               {/* CAJA RESULTADO */}
-              <div className="w-full bg-gradient-to-br from-emerald-950/20 to-slate-950/80 p-4 sm:p-5 rounded-2xl border border-emerald-500/25 flex justify-between items-center shadow-lg">
-                <div className="flex flex-col truncate pr-2">
-                  <span className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider mb-1">
-                    Equivalente
-                  </span>
-                  <span className="text-3xl sm:text-4xl font-mono text-emerald-400 font-black tracking-tight truncate tabular-nums">
-                    {formatCurrency(converted)}
-                  </span>
+              <div className="w-full bg-gradient-to-br from-[#3ddc97]/10 to-slate-950/80 p-3 sm:p-3.5 rounded-xl border border-[#3ddc97]/30 flex justify-between items-center">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-[#3ddc97]/15 border border-[#3ddc97]/30 flex items-center justify-center text-xs font-bold text-[#3ddc97] shrink-0">
+                    {isForeignToVes ? "Bs" : activeRate === "euro" ? "€" : "$"}
+                  </div>
+                  <div className="flex flex-col truncate">
+                    <span className="text-[9px] text-[#6eeab8] font-bold uppercase tracking-wider">
+                      Equivalente
+                    </span>
+                    <span className="text-2xl sm:text-3xl font-mono text-[#3ddc97] font-black tracking-tight truncate tabular-nums">
+                      {formatCurrency(converted)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={handleCopySingleResult}
                     title="Copiar resultado"
-                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 transition-all active:scale-90 border border-white/5"
+                    className="p-2 rounded-lg bg-slate-800/80 hover:bg-[#3ddc97]/20 text-slate-300 hover:text-[#3ddc97] transition-all active:scale-90 border border-white/5"
                   >
-                    <ClipboardDocumentIcon className="h-4 w-4" />
+                    <ClipboardDocumentIcon className="h-3.5 w-3.5" />
                   </button>
-                  <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/20 px-2.5 py-1.5 rounded-lg border border-emerald-500/30">
-                    {isForeignToVes ? "Bs" : activeRate === "euro" ? "EUR" : "USD"}
+                  <span className="text-[10px] font-mono font-bold text-[#3ddc97] bg-[#3ddc97]/15 px-2 py-1 rounded border border-[#3ddc97]/30">
+                    {isForeignToVes ? "VES" : activeRate === "euro" ? "EUR" : "USD"}
                   </span>
                 </div>
               </div>
+            </div>
 
-              {/* BOTÓN COMPARTIR */}
+            {/* CONCEPTO DE PAGO CARD (SUBIDO AL LUGAR DE LOS BOTONES REDUNDANTES) */}
+            <div className={`rounded-2xl border transition-all mb-3 overflow-hidden ${
+              conceptoOpen
+                ? "bg-[#0d1527]/85 border-[#3ddc97]/30 shadow-lg"
+                : "bg-[#0d1527]/60 border-white/5 hover:border-white/10"
+            }`}>
               <button
-                onClick={handleShareImage}
-                className="w-full h-12 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white rounded-xl flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] shadow-lg shadow-blue-500/20 font-bold text-xs uppercase tracking-widest"
+                onClick={() => setConceptoOpen(!conceptoOpen)}
+                className="w-full flex items-center justify-between p-3 text-left transition-colors"
               >
-                <ShareIcon className="h-4 w-4" />
-                <span>Compartir Cotización</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-[#3ddc97]/15 border border-[#3ddc97]/30 flex items-center justify-center text-[#3ddc97]">
+                    <DocumentTextIcon className="h-3.5 w-3.5" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-200 tracking-wide">
+                    Concepto de Pago
+                  </span>
+                </div>
+                <ChevronDownIcon className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
+                  conceptoOpen ? "rotate-180 text-[#3ddc97]" : ""
+                }`} />
               </button>
 
-              {/* BANNER A ANÁLISIS DIFERENCIAL */}
+              {conceptoOpen && (
+                <div className="px-3 pb-3 pt-1 border-t border-white/5">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                      Variables rápidas
+                    </span>
+                    <span className="text-[9px] text-slate-500">
+                      Click para insertar
+                    </span>
+                  </div>
+
+                  {/* CHIPS DE VARIABLES */}
+                  <div className="flex flex-wrap gap-1 mb-2.5">
+                    {["$usd", "$bs"].map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => insertConceptoVar(v)}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#3ddc97]/15 text-[#3ddc97] border border-[#3ddc97]/30 hover:bg-[#3ddc97]/25 active:scale-95 transition-all"
+                      >
+                        {v}
+                      </button>
+                    ))}
+                    {["$tasa", "$fuente", "$divisa", "$fecha"].map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => insertConceptoVar(v)}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#5ba8e5]/15 text-[#5ba8e5] border border-[#5ba8e5]/30 hover:bg-[#5ba8e5]/25 active:scale-95 transition-all"
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* TEXTAREA PLANTILLA */}
+                  <textarea
+                    ref={conceptoInputRef}
+                    value={conceptoTemplate}
+                    onChange={(e) => handleConceptoChange(e.target.value)}
+                    rows={2}
+                    className="w-full bg-slate-950/70 border border-white/10 rounded-xl p-2.5 text-xs text-slate-200 outline-none focus:border-[#3ddc97]/50 font-sans resize-none mb-2"
+                    placeholder="Escribe tu plantilla..."
+                  />
+
+                  {/* VISTA PREVIA RESUELTA */}
+                  <div className="bg-slate-950/90 rounded-xl p-2.5 border border-white/5 text-xs text-slate-300 leading-relaxed font-sans relative">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                        Vista previa resuelta
+                      </span>
+                      <button
+                        onClick={handleCopyConcepto}
+                        className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#3ddc97]/15 text-[#3ddc97] border border-[#3ddc97]/30 hover:bg-[#3ddc97]/25 transition-all"
+                      >
+                        {conceptoCopied ? (
+                          <>
+                            <CheckIcon className="h-3 w-3" /> Copiado
+                          </>
+                        ) : (
+                          <>
+                            <ClipboardDocumentIcon className="h-3 w-3" /> Copiar Concepto
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-200 break-words">
+                      {getResolvedConceptoText()}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ACCIONES RÁPIDAS V2.1 */}
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+              <button
+                onClick={handleCopyRate}
+                className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#0d1527]/70 border border-white/5 hover:border-[#3ddc97]/30 hover:bg-[#3ddc97]/10 transition-all group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-[#3ddc97]/10 flex items-center justify-center mb-1 text-[#3ddc97] group-hover:scale-105 transition-transform">
+                  <ClipboardDocumentIcon className="h-4 w-4" />
+                </div>
+                <span className="text-[9px] font-semibold text-slate-300 group-hover:text-[#3ddc97]">
+                  Copiar
+                </span>
+              </button>
+
+              <button
+                onClick={() => setView("history")}
+                className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#0d1527]/70 border border-white/5 hover:border-[#5ba8e5]/30 hover:bg-[#5ba8e5]/10 transition-all group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-[#5ba8e5]/10 flex items-center justify-center mb-1 text-[#5ba8e5] group-hover:scale-105 transition-transform">
+                  <CalendarDaysIcon className="h-4 w-4" />
+                </div>
+                <span className="text-[9px] font-semibold text-slate-300 group-hover:text-[#5ba8e5]">
+                  Historial
+                </span>
+              </button>
+
+              <button
+                onClick={handleShareImage}
+                className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#0d1527]/70 border border-white/5 hover:border-[#3ddc97]/30 hover:bg-[#3ddc97]/10 transition-all group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-[#3ddc97]/10 flex items-center justify-center mb-1 text-[#3ddc97] group-hover:scale-105 transition-transform">
+                  <ShareIcon className="h-4 w-4" />
+                </div>
+                <span className="text-[9px] font-semibold text-slate-300 group-hover:text-[#3ddc97]">
+                  Compartir
+                </span>
+              </button>
+
               <Link
                 href="/analisis"
-                className="group flex items-center gap-3.5 p-3.5 mt-auto bg-slate-950/60 hover:bg-blue-500/10 border border-slate-800 hover:border-blue-500/40 rounded-2xl transition-all duration-300"
+                className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#0d1527]/70 border border-white/5 hover:border-[#5ba8e5]/30 hover:bg-[#5ba8e5]/10 transition-all group"
               >
-                <div className="p-2.5 bg-slate-900 group-hover:bg-blue-600 rounded-xl transition-all shadow-md group-hover:shadow-blue-500/20">
-                  <ChartBarIcon className="w-5 h-5 text-blue-400 group-hover:text-white" />
+                <div className="w-8 h-8 rounded-lg bg-[#5ba8e5]/10 flex items-center justify-center mb-1 text-[#5ba8e5] group-hover:scale-105 transition-transform">
+                  <ChartBarIcon className="h-4 w-4" />
                 </div>
-                <div className="text-left flex-1 min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-200 group-hover:text-blue-400 transition-colors">
-                    Análisis Diferencial
-                  </p>
-                  <p className="text-[10px] text-slate-500 truncate">
-                    Conciliación inteligente de cuentas
-                  </p>
-                </div>
+                <span className="text-[9px] font-semibold text-slate-300 group-hover:text-[#5ba8e5]">
+                  Análisis
+                </span>
               </Link>
             </div>
           </div>
@@ -1119,10 +1375,10 @@ export default function CurrencyApp() {
           </div>
         )}
 
-        {/* PIE DE PÁGINA DISCRETO V2.0 */}
-        <div className="mt-5 pt-3 border-t border-slate-800/80 text-center flex items-center justify-between text-[10px] text-slate-500 font-mono">
-          <span className="text-emerald-400/80 font-bold">v2.0 • UltraFast</span>
-          <span className="tracking-widest uppercase">RYBAK.SOFTWARE © 2026</span>
+        {/* PIE DE PÁGINA DISCRETO V2.1 */}
+        <div className="mt-4 pt-3 border-t border-white/5 text-center flex items-center justify-between text-[10px] text-slate-500 font-mono">
+          <span className="text-[#3ddc97] font-bold">v2.0 • UltraFast</span>
+          <span className="tracking-widest uppercase text-slate-400">RYBAK.SOFTWARE © 2026</span>
         </div>
       </div>
     </div>

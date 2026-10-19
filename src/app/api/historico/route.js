@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRatesForMonth, saveRate, getRateByDate } from '@/lib/ratesRepository.js';
+import { getVenezuelaDate } from '@/lib/db.js';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import https from 'https';
@@ -20,12 +21,12 @@ export async function GET(request) {
     // 1. Obtener tasas del mes desde la Base de Datos con herencia continua garantizada
     let monthRates = await getRatesForMonth(anio, mes);
 
-    const now = new Date();
+    const now = getVenezuelaDate();
     const isCurrentMonth = (anio === now.getFullYear() && mes === (now.getMonth() + 1));
     const todayDisplay = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
 
-    // 2. Si es el mes en curso y aún no tenemos la tasa de hoy, intento de Fast-Inject (< 2.5 seg)
-    const hasToday = monthRates.some(r => r.fecha === todayDisplay);
+    // 2. Si es el mes en curso y aún no tenemos la tasa oficial de hoy (o solo tenemos Fill-Forward provisional), intento de Fast-Inject (< 2.5 seg)
+    const hasToday = monthRates.some(r => r.fecha === todayDisplay && r.source !== 'Fill-Forward');
     if (isCurrentMonth && !hasToday && !disableSync) {
       try {
         const agent = new https.Agent({ rejectUnauthorized: false });

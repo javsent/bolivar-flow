@@ -1,4 +1,4 @@
-import { getDbClient } from './db.js';
+import { getDbClient, getVenezuelaDate } from './db.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -282,7 +282,7 @@ export async function getRatesForMonth(year, month) {
   }));
 
   // Asegurar continuidad desde el día 01 del mes si faltan días al inicio
-  const now = new Date();
+  const now = getVenezuelaDate();
   const isCurrentMonth = (year === now.getFullYear() && month === (now.getMonth() + 1));
   const nowDay = now.getDate();
 
@@ -347,11 +347,13 @@ export async function getRatesForMonth(year, month) {
       }
     }
 
-    // Persistir las tasas rellenadas en segundo plano
+    // Persistir las tasas rellenadas (await para que no se pierdan en serverless)
     if (newItemsToPersist.length > 0) {
-      saveRatesBatch(newItemsToPersist).catch(e => {
+      try {
+        await saveRatesBatch(newItemsToPersist);
+      } catch (e) {
         console.warn("⚠️ No se pudieron persistir días rellenados:", e.message);
-      });
+      }
     }
 
     // Ordenar descendente (más reciente primero) para compatibilidad

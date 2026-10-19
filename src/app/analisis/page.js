@@ -361,11 +361,12 @@ export default function AnalisisDiferencial() {
 
         {data.length > 0 && resumen && !loading && (
           <div className="space-y-10 animate-in fade-in duration-500">
-            <div className="glass-card rounded-3xl overflow-hidden shadow-2xl">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-slate-800/80 text-[9px] uppercase font-black tracking-widest text-slate-500">
-                  <tr><th className="p-4">Fecha Operación</th><th className="p-4 text-right">Tasa {moneda.toUpperCase()}</th><th className="p-4 text-right">Monto Bs.</th><th className="p-4 text-right">Valor {moneda === 'usd' ? '$' : '€'}</th></tr>
-                </thead>
+            <div className="glass-card rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-xs text-left min-w-[500px]">
+                  <thead className="bg-slate-900/90 text-[9px] uppercase font-black tracking-widest text-slate-400">
+                    <tr><th className="p-3 sm:p-4">Fecha Operación</th><th className="p-3 sm:p-4 text-right">Tasa {moneda.toUpperCase()}</th><th className="p-3 sm:p-4 text-right">Monto Bs.</th><th className="p-3 sm:p-4 text-right">Valor {moneda === 'usd' ? '$' : '€'}</th></tr>
+                  </thead>
                 <tbody className="divide-y divide-slate-800/50">
                   {data.map((row, i) => (
                     <tr key={i} className="hover:bg-white/5 transition-colors">
@@ -383,6 +384,7 @@ export default function AnalisisDiferencial() {
                   </tr>
                 </tbody>
               </table>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

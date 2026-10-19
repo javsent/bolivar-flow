@@ -42,56 +42,56 @@ const HistoryChart = ({ data }) => {
   };
 
   return (
-    <div className="relative w-full bg-[#1e293b] rounded-xl p-4 border border-[#334155] mb-6 select-none shadow-inner">
-      <div className="w-full h-[220px]">
+    <div className="relative w-full bg-[#0d1527]/90 rounded-2xl p-3 sm:p-4 border border-white/10 mb-4 select-none shadow-xl">
+      <div className="w-full h-[200px] sm:h-[220px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
             <defs>
               <linearGradient id="colorUsd" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#3ddc97" stopOpacity={0.35}/>
+                <stop offset="95%" stopColor="#3ddc97" stopOpacity={0}/>
               </linearGradient>
               <linearGradient id="colorEur" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#5ba8e5" stopOpacity={0.35}/>
+                <stop offset="95%" stopColor="#5ba8e5" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis dataKey="dia" stroke="#94a3b8" tick={{fontSize: 10}} axisLine={false} tickLine={false} />
-            <YAxis stroke="#94a3b8" tick={{fontSize: 10}} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis dataKey="dia" stroke="#64748b" tick={{fontSize: 10}} axisLine={false} tickLine={false} />
+            <YAxis stroke="#64748b" tick={{fontSize: 10}} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
             <Tooltip content={<CustomTooltip />} />
-            <Area isAnimationActive={false} type="monotone" dataKey="euro" stroke="#3b82f6" strokeWidth={2} fill="url(#colorEur)" activeDot={{ r: 7, style: { cursor: 'pointer' }, onClick: (_, e) => handleCopy(e.payload.euro, 'EUR€') }} />
-            <Area isAnimationActive={false} type="monotone" dataKey="usd" stroke="#10b981" strokeWidth={2} fill="url(#colorUsd)" activeDot={{ r: 7, style: { cursor: 'pointer' }, onClick: (_, e) => handleCopy(e.payload.usd, 'USD$') }} />
+            <Area isAnimationActive={false} type="monotone" dataKey="euro" stroke="#5ba8e5" strokeWidth={2.5} fill="url(#colorEur)" activeDot={{ r: 6, style: { cursor: 'pointer' }, onClick: (_, e) => handleCopy(e.payload.euro, 'EUR€') }} />
+            <Area isAnimationActive={false} type="monotone" dataKey="usd" stroke="#3ddc97" strokeWidth={2.5} fill="url(#colorUsd)" activeDot={{ r: 6, style: { cursor: 'pointer' }, onClick: (_, e) => handleCopy(e.payload.usd, 'USD$') }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-[#334155] flex gap-4">
-        <div className="flex-1 bg-[#0f172a] p-3 rounded-lg border border-[#10b981]/20">
+      <div className="mt-3 pt-3 border-t border-white/10 flex flex-col xs:flex-row gap-2 sm:gap-3">
+        <div className="flex-1 bg-slate-900/80 p-2.5 sm:p-3 rounded-xl border border-[#3ddc97]/25">
             <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] font-bold text-[#10b981] uppercase">Variación USD$</span>
-                {diffUsd.isUp ? <ArrowTrendingUpIcon className="h-3 w-3 text-[#10b981]" /> : <ArrowTrendingDownIcon className="h-3 w-3 text-red-500" />}
+                <span className="text-[10px] font-bold text-[#3ddc97] uppercase tracking-wider">Variación USD$</span>
+                {diffUsd.isUp ? <ArrowTrendingUpIcon className="h-3 w-3 text-[#3ddc97]" /> : <ArrowTrendingDownIcon className="h-3 w-3 text-red-400" />}
             </div>
-            <div className="flex items-baseline gap-1">
-                <span className={`text-sm font-mono font-bold ${diffUsd.isUp ? 'text-white' : 'text-red-400'}`}>
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+                <span className={`text-xs sm:text-sm font-mono font-bold ${diffUsd.isUp ? 'text-white' : 'text-red-400'}`}>
                     {diffUsd.isUp ? '+' : ''}{new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2 }).format(diffUsd.monto)}
                 </span>
-                <span className={`text-[9px] font-bold ${diffUsd.isUp ? 'text-[#10b981]' : 'text-red-500'}`}>
+                <span className={`text-[9px] font-bold ${diffUsd.isUp ? 'text-[#3ddc97]' : 'text-red-400'}`}>
                     ({diffUsd.pct.toFixed(2)}%)
                 </span>
             </div>
         </div>
 
-        <div className="flex-1 bg-[#0f172a] p-3 rounded-lg border border-[#3b82f6]/20">
+        <div className="flex-1 bg-slate-900/80 p-2.5 sm:p-3 rounded-xl border border-[#5ba8e5]/25">
             <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] font-bold text-[#3b82f6] uppercase">Variación EUR€</span>
-                {diffEur.isUp ? <ArrowTrendingUpIcon className="h-3 w-3 text-[#3b82f6]" /> : <ArrowTrendingDownIcon className="h-3 w-3 text-red-500" />}
+                <span className="text-[10px] font-bold text-[#5ba8e5] uppercase tracking-wider">Variación EUR€</span>
+                {diffEur.isUp ? <ArrowTrendingUpIcon className="h-3 w-3 text-[#5ba8e5]" /> : <ArrowTrendingDownIcon className="h-3 w-3 text-red-400" />}
             </div>
-            <div className="flex items-baseline gap-1">
-                <span className={`text-sm font-mono font-bold ${diffEur.isUp ? 'text-white' : 'text-red-400'}`}>
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+                <span className={`text-xs sm:text-sm font-mono font-bold ${diffEur.isUp ? 'text-white' : 'text-red-400'}`}>
                     {diffEur.isUp ? '+' : ''}{new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2 }).format(diffEur.monto)}
                 </span>
-                <span className={`text-[9px] font-bold ${diffEur.isUp ? 'text-[#3b82f6]' : 'text-red-500'}`}>
+                <span className={`text-[9px] font-bold ${diffEur.isUp ? 'text-[#5ba8e5]' : 'text-red-400'}`}>
                     ({diffEur.pct.toFixed(2)}%)
                 </span>
             </div>

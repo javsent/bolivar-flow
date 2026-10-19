@@ -2,16 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* --- DESIGN SYSTEM TOKENS 2.0 --- */
+/* --- DESIGN SYSTEM TOKENS 2.1 (from logo palette) --- */
 :root {
-  --app-bg: #070b14;
-  --card-bg: rgba(15, 23, 42, 0.75);
+  --app-bg: #0d1527;
+  --card-bg: rgba(13, 27, 52, 0.85);
+  --card-bg-subtle: rgba(13, 27, 52, 0.50);
   --card-border: rgba(255, 255, 255, 0.08);
-  --emerald-accent: #10b981;
-  --emerald-glow: rgba(16, 185, 129, 0.25);
-  --blue-accent: #3b82f6;
-  --blue-glow: rgba(59, 130, 246, 0.25);
-  --cyan-accent: #38bdf8;
+  --card-border-mint: rgba(61, 220, 151, 0.25);
+  --card-border-blue: rgba(91, 168, 229, 0.22);
+  --mint: #3ddc97;
+  --mint-light: #6eeab8;
+  --mint-dark: #28b878;
+  --mint-glow: rgba(61, 220, 151, 0.25);
+  --electric-blue: #5ba8e5;
+  --electric-blue-light: #8dc5f0;
+  --electric-blue-glow: rgba(91, 168, 229, 0.25);
   --foreground-rgb: 255, 255, 255;
 }
 
@@ -19,9 +24,9 @@ body {
   color: rgb(var(--foreground-rgb));
   background: var(--app-bg) !important;
   background-image: 
-    radial-gradient(at 15% 15%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
-    radial-gradient(at 85% 20%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
-    radial-gradient(at 50% 90%, rgba(56, 189, 248, 0.05) 0px, transparent 60%);
+    radial-gradient(ellipse 320px 240px at 15% 12%, rgba(61, 220, 151, 0.09) 0%, transparent 70%),
+    radial-gradient(ellipse 260px 220px at 85% 10%, rgba(91, 168, 229, 0.09) 0%, transparent 70%),
+    radial-gradient(ellipse 350px 250px at 50% 90%, rgba(61, 220, 151, 0.05) 0%, transparent 70%);
   background-attachment: fixed;
   -webkit-user-select: none;
   user-select: none;
@@ -29,39 +34,52 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* --- PREMIUM UTILITIES 2.0 --- */
+/* --- PREMIUM UTILITIES 2.1 --- */
 
 .glass-card {
   background: var(--card-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--card-border);
-  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.05) inset;
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(255, 255, 255, 0.05) inset;
 }
 
 .glass-card-subtle {
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--card-bg-subtle);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hero-gradient-card {
+  background: linear-gradient(140deg, #1a3a6e 0%, #0f2448 60%, #0d1527 100%);
+  border: 1px solid rgba(61, 220, 151, 0.25);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7), 0 0 30px -10px rgba(61, 220, 151, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.mint-gradient-text {
+  background: linear-gradient(135deg, #6eeab8 0%, #3ddc97 50%, #28b878 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .emerald-gradient-text {
-  background: linear-gradient(135deg, #2dd4bf 0%, #10b981 50%, #059669 100%);
+  background: linear-gradient(135deg, #6eeab8 0%, #3ddc97 50%, #28b878 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .blue-gradient-text {
-  background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #2563eb 100%);
+  background: linear-gradient(135deg, #8dc5f0 0%, #5ba8e5 50%, #3b82f6 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .brand-gradient-text {
-  background: linear-gradient(135deg, #2dd4bf 0%, #38bdf8 50%, #3b82f6 100%);
+  background: linear-gradient(135deg, #6eeab8 0%, #3ddc97 40%, #5ba8e5 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -142,7 +160,7 @@ textarea {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--emerald-accent);
+  background: var(--mint);
 }
 
 /* Mobile optimizations */
