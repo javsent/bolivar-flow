@@ -19,6 +19,14 @@
         {
             "path": "/api/cron/sync?type=sweep-previous",
             "schedule": "0 11 1 * *"
+        },
+        {
+            "path": "/api/cron/miner",
+            "schedule": "0 22 * * 1-5"
+        },
+        {
+            "path": "/api/cron/miner",
+            "schedule": "0 12 * * 1"
         }
     ]
 }
