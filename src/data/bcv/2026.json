@@ -1902,6 +1902,27 @@
   ],
   "10": [
     {
+      "fecha": "30/10/2026",
+      "usd": 889.2553,
+      "euro": 992.80018713,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "29/10/2026",
+      "usd": 888.8909,
+      "euro": 989.38890515,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
+      "fecha": "28/10/2026",
+      "usd": 888.1183,
+      "euro": 989.71903352,
+      "isWeekend": false,
+      "source": "XLSX"
+    },
+    {
       "fecha": "27/10/2026",
       "usd": 887.302,
       "euro": 994.03555758,
