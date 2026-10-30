@@ -57,13 +57,15 @@ export default function LoginView() {
 
     useEffect(() => {
         initGoogleBtn();
+        // Reintentar mientras el script de Google no haya cargado o el botón no se haya renderizado
+        // Usamos un intervalo más largo (10s) para conexiones lentas
         const timer = setInterval(() => {
             if (window.google?.accounts?.id && googleBtnRef.current && !googleBtnRef.current.hasChildNodes()) {
                 initGoogleBtn();
             }
         }, 400);
 
-        const timeout = setTimeout(() => clearInterval(timer), 4000);
+        const timeout = setTimeout(() => clearInterval(timer), 10000);
 
         return () => {
             clearInterval(timer);
