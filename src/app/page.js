@@ -26,7 +26,12 @@ import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import HistoryChart from "@/components/HistoryChart";
 import { useAuth } from "@/context/AuthContext";
-import { formatCurrency } from "@/lib/utils";
+import {
+  formatCurrency,
+  parsePastedAmount,
+  parseAmountToNumber,
+  formatAmountDisplay,
+} from "@/lib/utils";
 
 export default function CurrencyApp() {
   const { user, userData, userSettings, saveSettings, logout } = useAuth();
@@ -312,11 +317,11 @@ export default function CurrencyApp() {
   // --- CÁLCULO DE CONVERSIÓN ---
   useEffect(() => {
     const currentRate = rates[activeRate];
-    if (!amount || isNaN(amount) || !currentRate) {
+    const val = parseAmountToNumber(amount);
+    if (!amount || val <= 0 || !currentRate) {
       setConverted(0);
       return;
     }
-    const val = parseFloat(amount);
     if (isForeignToVes) {
       setConverted(val * currentRate);
     } else {
@@ -329,18 +334,34 @@ export default function CurrencyApp() {
   };
 
   const handleAmountChange = (e) => {
-    const val = e.target.value.replace(/,/g, ".");
-    if (!isNaN(val) || val === "") {
-      setAmount(val);
+    let val = e.target.value;
+    // Sustituir punto por coma
+    val = val.replace(/\./g, ",");
+    // Permitir solo números y coma
+    val = val.replace(/[^0-9,]/g, "");
+    // Máximo una coma
+    const commaIndex = val.indexOf(",");
+    if (commaIndex !== -1) {
+      val = val.slice(0, commaIndex + 1) + val.slice(commaIndex + 1).replace(/,/g, "");
     }
+    // Si inicia con coma, anteponer 0
+    if (val.startsWith(",")) {
+      val = "0" + val;
+    }
+    setAmount(val);
+  };
+
+  const handleAmountBlur = () => {
+    if (!amount || amount.trim() === "") return;
+    setAmount(formatAmountDisplay(amount));
   };
 
   const handlePaste = (e) => {
     e.preventDefault();
     const paste = (e.clipboardData || window.clipboardData).getData("text");
-    const cleanPaste = paste.replace(/\./g, "").replace(/,/g, ".").trim();
-    if (!isNaN(cleanPaste) && cleanPaste !== "") {
-      setAmount(cleanPaste);
+    const formatted = parsePastedAmount(paste);
+    if (formatted) {
+      setAmount(formatted);
     }
   };
 
@@ -368,15 +389,15 @@ export default function CurrencyApp() {
       minimumFractionDigits: 2,
     }).format(currentRate);
     const usdVal = isForeignToVes
-      ? amount || "0"
+      ? formatAmountDisplay(amount)
       : converted
       ? formatCurrency(converted)
-      : "0";
+      : "0,00";
     const bsVal = isForeignToVes
       ? converted
         ? formatCurrency(converted)
-        : "0"
-      : amount || "0";
+        : "0,00"
+      : formatAmountDisplay(amount);
     const currencyName = activeRate === "euro" ? "EUR" : "USD";
     const sourceLabel =
       activeRate === "euro"
@@ -709,7 +730,7 @@ export default function CurrencyApp() {
                 Monto:
               </span>
               <span className="text-white font-mono text-4xl font-bold">
-                {amount || "0"}{" "}
+                {formatAmountDisplay(amount)}{" "}
                 <span className="text-slate-500 text-2xl ml-2">
                   {isForeignToVes ? (activeRate === "euro" ? "€" : "$") : "Bs"}
                 </span>
@@ -1018,6 +1039,7 @@ export default function CurrencyApp() {
                   value={amount}
                   onChange={handleAmountChange}
                   onPaste={handlePaste}
+                  onBlur={handleAmountBlur}
                   placeholder="0,00"
                   className="flex-1 bg-transparent text-2xl sm:text-3xl font-mono text-white outline-none min-w-0 placeholder:text-slate-700 tabular-nums"
                 />
