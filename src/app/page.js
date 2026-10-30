@@ -102,12 +102,15 @@ export default function CurrencyApp() {
     resetToToday();
   }, []);
 
-  // Sincronizar plantilla desde la base de datos (settings de usuario)
+  // Sincronizar plantilla y tasa por defecto desde la base de datos (settings de usuario)
   useEffect(() => {
     if (userSettings?.concepto_template) {
       setConceptoTemplate(userSettings.concepto_template);
     }
-  }, [userSettings?.concepto_template]);
+    if (userSettings?.default_rate && (userSettings.default_rate === "bcv" || userSettings.default_rate === "euro")) {
+      setActiveRate(userSettings.default_rate);
+    }
+  }, [userSettings?.concepto_template, userSettings?.default_rate]);
 
   // Guardar cambios de plantilla en la base de datos con debounce
   const templateSaveTimeout = useRef(null);
@@ -205,27 +208,24 @@ export default function CurrencyApp() {
   // --- LÓGICA DE TASAS (WEB API) MEJORADA ---
   const fetchCurrentRates = async () => {
     setLoading(true);
-    historicoCache.current = {};
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
+    delete historicoCache.current[currentMonthKey];
+
     try {
-      const now = new Date();
       const fd = String(now.getDate()).padStart(2, "0");
       const fm = String(now.getMonth() + 1).padStart(2, "0");
       const todayStr = `${fd}/${fm}/${now.getFullYear()}`;
 
-      let tasaHoy = await findValidRateBackwards(now, 1, false);
-
+      // 1. Consulta directa ultra-rápida a /api/tasas (Turso DB < 20ms)
       const res = await fetch("/api/tasas");
-      if (!res.ok) throw new Error("Falló API");
+      if (!res.ok) throw new Error("Falló API de tasas");
       const data = await res.json();
 
       let finalRates = data;
-      if (tasaHoy && tasaHoy.fecha === todayStr) {
-        finalRates = {
-          ...data,
-          bcv: tasaHoy.usd,
-          euro: tasaHoy.euro,
-        };
-      } else if (data.bcv <= 0) {
+
+      // 2. Si no hay tasa válida en la respuesta directa, buscar en histórico reciente
+      if (!data.bcv || data.bcv <= 0) {
         let tasaVigente = await findValidRateBackwards(now, 7, false);
         if (tasaVigente) {
           finalRates = {
@@ -234,10 +234,10 @@ export default function CurrencyApp() {
             euro: tasaVigente.euro,
           };
           if (tasaVigente.fecha !== todayStr) {
-            showToast(`Tasa del día ${tasaVigente.fecha}`);
+            showToast(`Usando última tasa oficial del ${tasaVigente.fecha}`);
           }
         }
-      } else if (data.fecha && data.fecha !== todayStr) {
+      } else if (data.isStale || (data.fecha && data.fecha !== todayStr)) {
         showToast(`Tasa oficial del ${data.fecha}`);
       }
 

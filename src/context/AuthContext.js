@@ -1,6 +1,5 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import whitelist from '@/data/whitelist.json';
 
 const AuthContext = createContext();
 
@@ -9,18 +8,23 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null); // String username o perfil
     const [userData, setUserData] = useState(null); // { id, email, name, avatar }
     const [userSettings, setUserSettings] = useState(null); // { concepto_template, default_rate }
+    const [authToken, setAuthToken] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const savedGoogle = localStorage.getItem('bolivarflow_google_user');
+        const savedUser = localStorage.getItem('bolivarflow_user');
         const savedSettings = localStorage.getItem('bolivarflow_user_settings');
-        const savedUser = localStorage.getItem('rybak_user');
+        const savedToken = localStorage.getItem('bolivarflow_auth_token');
 
-        if (savedGoogle) {
+        if (savedToken) {
+            setAuthToken(savedToken);
+        }
+
+        if (savedUser) {
             try {
-                const parsedGoogle = JSON.parse(savedGoogle);
-                setUserData(parsedGoogle);
-                setUser(parsedGoogle.name || parsedGoogle.email);
+                const parsedUser = JSON.parse(savedUser);
+                setUserData(parsedUser);
+                setUser(parsedUser.name || parsedUser.email);
                 setIsAuth(true);
 
                 if (savedSettings) {
@@ -30,28 +34,20 @@ export function AuthProvider({ children }) {
                 }
 
                 // Sincronizar en background los settings más recientes de la DB
-                fetch(`/api/user/settings?userId=${encodeURIComponent(parsedGoogle.id)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.settings) {
-                            setUserSettings(data.settings);
-                            localStorage.setItem('bolivarflow_user_settings', JSON.stringify(data.settings));
-                        }
+                if (parsedUser.id) {
+                    fetch(`/api/user/settings?userId=${encodeURIComponent(parsedUser.id)}`, {
+                        headers: savedToken ? { 'Authorization': `Bearer ${savedToken}` } : {},
                     })
-                    .catch(() => {});
-            } catch (e) {}
-        } else if (savedUser) {
-            const found = whitelist.users.find(u => u.user === savedUser);
-            if (found) {
-                setIsAuth(true);
-                setUser(found.user);
-                setUserData({ id: `local_${found.user}`, name: found.user });
-                if (savedSettings) {
-                    try {
-                        setUserSettings(JSON.parse(savedSettings));
-                    } catch (e) {}
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.settings) {
+                                setUserSettings(data.settings);
+                                localStorage.setItem('bolivarflow_user_settings', JSON.stringify(data.settings));
+                            }
+                        })
+                        .catch(() => {});
                 }
-            }
+            } catch (e) {}
         }
         setLoading(false);
     }, []);
@@ -73,17 +69,54 @@ export function AuthProvider({ children }) {
             setUserData(data.user);
             setUser(data.user.name || data.user.email);
             setUserSettings(data.settings);
+            if (data.token) {
+                setAuthToken(data.token);
+                localStorage.setItem('bolivarflow_auth_token', data.token);
+            }
             setIsAuth(true);
 
-            localStorage.setItem('bolivarflow_google_user', JSON.stringify(data.user));
+            localStorage.setItem('bolivarflow_user', JSON.stringify(data.user));
             if (data.settings) {
                 localStorage.setItem('bolivarflow_user_settings', JSON.stringify(data.settings));
             }
-            localStorage.removeItem('rybak_user');
 
             return { success: true };
         } catch (error) {
             return { success: false, message: error.message };
+        }
+    };
+
+    // Login seguro contra Turso DB (Local/Whitelist)
+    const login = async (username, password) => {
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                return { success: false, message: data.error || 'Usuario o contraseña incorrectos' };
+            }
+
+            setUserData(data.user);
+            setUser(data.user.name || data.user.email);
+            setUserSettings(data.settings);
+            if (data.token) {
+                setAuthToken(data.token);
+                localStorage.setItem('bolivarflow_auth_token', data.token);
+            }
+            setIsAuth(true);
+
+            localStorage.setItem('bolivarflow_user', JSON.stringify(data.user));
+            if (data.settings) {
+                localStorage.setItem('bolivarflow_user_settings', JSON.stringify(data.settings));
+            }
+
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: error.message || 'Error al conectar con el servidor' };
         }
     };
 
@@ -96,11 +129,16 @@ export function AuthProvider({ children }) {
         });
 
         const activeUserId = userData?.id;
+        const currentToken = authToken || localStorage.getItem('bolivarflow_auth_token');
+
         if (activeUserId) {
             try {
                 await fetch('/api/user/settings', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...(currentToken ? { 'Authorization': `Bearer ${currentToken}` } : {})
+                    },
                     body: JSON.stringify({
                         userId: activeUserId,
                         ...newSettings,
@@ -110,33 +148,19 @@ export function AuthProvider({ children }) {
                 console.warn('No se pudo guardar settings en DB:', e.message);
             }
         }
-    }, [userData]);
-
-    const login = (username, password) => {
-        const found = whitelist.users.find(
-            u => u.user.toLowerCase() === username.toLowerCase().trim() &&
-                u.pass.toLowerCase() === password.toLowerCase().trim()
-        );
-
-        if (found) {
-            localStorage.setItem('rybak_user', found.user);
-            localStorage.removeItem('bolivarflow_google_user');
-            setIsAuth(true);
-            setUser(found.user);
-            setUserData({ id: `local_${found.user}`, name: found.user });
-            return { success: true };
-        }
-        return { success: false, message: 'Usuario o contraseña incorrectos' };
-    };
+    }, [userData, authToken]);
 
     const logout = () => {
+        localStorage.removeItem('bolivarflow_user');
+        localStorage.removeItem('bolivarflow_auth_token');
+        localStorage.removeItem('bolivarflow_user_settings');
         localStorage.removeItem('rybak_user');
         localStorage.removeItem('bolivarflow_google_user');
-        localStorage.removeItem('bolivarflow_user_settings');
         setIsAuth(false);
         setUser(null);
         setUserData(null);
         setUserSettings(null);
+        setAuthToken(null);
     };
 
     return (
@@ -145,6 +169,7 @@ export function AuthProvider({ children }) {
             user, 
             userData, 
             userSettings, 
+            authToken,
             login, 
             loginWithGoogle, 
             saveSettings, 

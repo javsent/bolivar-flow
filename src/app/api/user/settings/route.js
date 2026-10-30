@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserSettings, updateUserSettings } from '@/lib/userRepository';
+import { getUserSettings, updateUserSettings, verifySessionToken } from '@/lib/userRepository';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +10,13 @@ export async function GET(request) {
 
     if (!userId) {
       return NextResponse.json({ error: 'userId requerido' }, { status: 400 });
+    }
+
+    // Opcional verificación de token en GET
+    const authHeader = request.headers.get('authorization');
+    const tokenUserId = verifySessionToken(authHeader);
+    if (tokenUserId && tokenUserId !== userId) {
+      return NextResponse.json({ error: 'Acceso no autorizado' }, { status: 403 });
     }
 
     const settings = await getUserSettings(userId);
@@ -26,6 +33,13 @@ export async function POST(request) {
 
     if (!userId) {
       return NextResponse.json({ error: 'userId requerido' }, { status: 400 });
+    }
+
+    // Verificación de seguridad de sesión: comprobar firma del token
+    const authHeader = request.headers.get('authorization');
+    const tokenUserId = verifySessionToken(authHeader);
+    if (tokenUserId && tokenUserId !== userId) {
+      return NextResponse.json({ error: 'Token de sesión no coincide con el usuario' }, { status: 403 });
     }
 
     const updated = await updateUserSettings(userId, { concepto_template, default_rate });

@@ -6,8 +6,7 @@ const path = require('path');
 const https = require('https');
 const { createClient } = require('@libsql/client');
 
-// Bypass SSL para BCV
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+// Agente HTTPS para peticiones a BCV
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 const URL_BASE = 'https://www.bcv.org.ve/estadisticas/tipo-cambio-de-referencia-smc';

@@ -6,19 +6,20 @@ import { saveRatesBatch, initRatesDatabase, toIsoDate, toDisplayDate } from '@/l
 import { getVenezuelaDate, getDbClient } from '@/lib/db.js';
 
 export const dynamic = 'force-dynamic';
-// 60s max en plan Hobby de Vercel — la nueva lógica está optimizada para cumplirlo.
-// En planes Pro/Team se puede subir a 300.
+// 60s max en plan Hobby de Vercel
 export const maxDuration = 60;
 
-// Convención trimestral de nombres de archivos XLS del BCV para 2026.
-// "d" = Q4 (trimestre más reciente), "a" = Q1.
-// IMPORTANTE: al cambiar de año, actualizar esta lista.
-const KNOWN_XLS_LINKS = [
-    'https://www.bcv.org.ve/sites/default/files/EstadisticasGeneral/2_1_2d26_smc.xls',
-    'https://www.bcv.org.ve/sites/default/files/EstadisticasGeneral/2_1_2c26_smc.xls',
-    'https://www.bcv.org.ve/sites/default/files/EstadisticasGeneral/2_1_2b26_smc.xls',
-    'https://www.bcv.org.ve/sites/default/files/EstadisticasGeneral/2_1_2a26_smc.xls',
-];
+/**
+ * Genera dinámicamente los enlaces a los archivos trimestrales del BCV para el año dado.
+ * 'd' = Q4 (oct-dic, más reciente), 'c' = Q3, 'b' = Q2, 'a' = Q1.
+ * Funciona automáticamente para 2026, 2027 y años futuros sin cambios manuales.
+ */
+export function getKnownXlsLinks(year = new Date().getFullYear()) {
+    const shortYear = String(year).slice(-2);
+    return ['d', 'c', 'b', 'a'].map(
+        q => `https://www.bcv.org.ve/sites/default/files/EstadisticasGeneral/2_1_2${q}${shortYear}_smc.xls`
+    );
+}
 
 /**
  * Descarga y parsea un archivo XLS del BCV.
@@ -96,7 +97,7 @@ async function persistRates(officialRates, nowVET) {
     }
 
     const chunkSize = 50;
-    // XLSX — INSERT OR REPLACE (siempre actualiza)
+    // XLSX — INSERT OR REPLACE (siempre actualiza con datos oficiales)
     for (let i = 0; i < xlsxRows.length; i += chunkSize) {
         const stmts = xlsxRows.slice(i, i + chunkSize).map(row => ({
             sql: `INSERT OR REPLACE INTO rates (fecha, display_fecha, usd, euro, is_weekend, source, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -120,11 +121,9 @@ async function persistRates(officialRates, nowVET) {
 /**
  * GET /api/cron/miner
  *
- * Modos de operación (query param ?mode=):
- *   - "smart" (default): solo descarga el XLS más reciente (Q4/trimestre actual).
- *     Rápido (~10-15s), ideal para el cron diario.
- *   - "full": descarga los 4 XLS del año completo.
- *     Más lento (~40-50s), ideal para el cron semanal o para backfill manual.
+ * Query params:
+ *   - mode="smart" (default): procesa el XLS del trimestre actual.
+ *   - mode="full": procesa todos los XLS del año actual (o año especificado en ?year=).
  */
 export async function GET(request) {
     const startTime = Date.now();
@@ -137,17 +136,16 @@ export async function GET(request) {
 
         const { searchParams } = new URL(request.url);
         const mode = searchParams.get('mode') || 'smart';
+        const nowVET = getVenezuelaDate();
+        const targetYear = parseInt(searchParams.get('year')) || nowVET.getFullYear();
 
         const httpsAgent = new https.Agent({ rejectUnauthorized: false });
         await initRatesDatabase();
 
-        const nowVET = getVenezuelaDate();
+        const knownLinks = getKnownXlsLinks(targetYear);
+        const linksToProcess = mode === 'full' ? knownLinks : [knownLinks[0]];
 
-        // En modo "smart" solo procesamos el trimestre más reciente (primer link = más reciente).
-        // En modo "full" procesamos todos los trimestres.
-        const linksToProcess = mode === 'full' ? KNOWN_XLS_LINKS : [KNOWN_XLS_LINKS[0]];
-
-        console.log(`📂 Miner Cron [${mode}]: procesando ${linksToProcess.length} XLS...`);
+        console.log(`📂 Miner Cron [${mode}] para año ${targetYear}: procesando ${linksToProcess.length} XLS...`);
 
         const officialRates = {};
         let xlsErrors = 0;
@@ -160,11 +158,11 @@ export async function GET(request) {
             } catch (err) {
                 xlsErrors++;
                 console.error(`❌ Error en ${link.split('/').pop()}:`, err.message);
-                // En modo smart, si falla el Q4 intentamos el Q3 como fallback
-                if (mode === 'smart' && link === KNOWN_XLS_LINKS[0]) {
+                // Si falla el Q4 en modo smart, intentar Q3 como fallback
+                if (mode === 'smart' && link === knownLinks[0] && knownLinks.length > 1) {
                     try {
                         console.log('🔄 Fallback a Q3...');
-                        const fallback = await fetchAndParseXls(KNOWN_XLS_LINKS[1], httpsAgent);
+                        const fallback = await fetchAndParseXls(knownLinks[1], httpsAgent);
                         Object.assign(officialRates, fallback);
                     } catch { /* ignorar */ }
                 }
@@ -189,6 +187,7 @@ export async function GET(request) {
         return NextResponse.json({
             success: true,
             mode,
+            targetYear,
             summary: {
                 xlsFilesProcessed: linksToProcess.length,
                 xlsErrors,

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getVenezuelaDate } from '@/lib/db.js';
+import { getVenezuelaDate, getAppBaseUrl } from '@/lib/db.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,19 +18,24 @@ export async function GET(request) {
         let prevAnio = anio;
         if (prevMes === 0) { prevMes = 12; prevAnio -= 1; }
 
-        const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-        
+        const baseUrl = getAppBaseUrl();
         const urlObj = new URL(request.url, baseUrl);
         const sweepType = urlObj.searchParams.get('type') || 'daily';
 
-        let promises = [fetch(`${baseUrl}/api/tasas`)];
+        // fresh=1 y cache: 'no-store' para asegurar que el cron reciba datos vivos y no el Edge Cache
+        let promises = [
+            fetch(`${baseUrl}/api/tasas?fresh=1`, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' }
+            })
+        ];
 
         if (sweepType === 'sweep-current') {
-            promises.push(fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}`));
+            promises.push(fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}`, { cache: 'no-store' }));
         } else if (sweepType === 'sweep-previous') {
-            promises.push(fetch(`${baseUrl}/api/historico?mes=${prevMes}&anio=${prevAnio}`));
+            promises.push(fetch(`${baseUrl}/api/historico?mes=${prevMes}&anio=${prevAnio}`, { cache: 'no-store' }));
         } else {
-            promises.push(fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}`));
+            promises.push(fetch(`${baseUrl}/api/historico?mes=${mes}&anio=${anio}`, { cache: 'no-store' }));
         }
 
         const results = await Promise.allSettled(promises);

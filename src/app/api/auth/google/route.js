@@ -22,8 +22,8 @@ export async function POST(request) {
 
     const payload = await googleRes.json();
 
-    // Validar aud (audience) coincidente
-    const expectedAud = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "173592708065-1m316mss15guub2csg0f4jkhuoea0fct.apps.googleusercontent.com";
+    // Validar aud (audience) coincidente usando la variable de entorno obligatoria
+    const expectedAud = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (expectedAud && payload.aud !== expectedAud) {
       return NextResponse.json({ error: 'Audience de Google inválido' }, { status: 403 });
     }
@@ -47,6 +47,7 @@ export async function POST(request) {
         avatar: result.user.avatar,
       },
       settings: result.settings,
+      token: result.token,
     });
   } catch (error) {
     console.error('Error en /api/auth/google:', error);

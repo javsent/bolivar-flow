@@ -1,32 +1,4 @@
 {
-  "users": [
-    {
-      "user": "@blancaRybak",
-      "pass": "blanca"
-    },
-    {
-      "user": "@diegoDelgado",
-      "pass": "diego"
-    },
-    {
-      "user": "@javierRybak",
-      "pass": "javier"
-    },
-    {
-      "user": "@davidPina",
-      "pass": "david"
-    },
-    {
-      "user": "Rybakasa",
-      "pass": "rybak"
-    },
-    {
-      "user": "@invitado",
-      "pass": "invitado"
-    },
-    {
-      "user": "@admin",
-      "pass": "admin123"
-    }
-  ]
+  "migrated_to_database": true,
+  "note": "Las credenciales han sido migradas a la base de datos Turso con hashing PBKDF2-SHA512. No almacenar contraseñas en este archivo."
 }

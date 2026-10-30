@@ -179,7 +179,18 @@ export async function saveRatesBatch(ratesArray) {
   const chunkSize = 50;
   for (let i = 0; i < statements.length; i += chunkSize) {
     const chunk = statements.slice(i, i + chunkSize);
-    await db.batch(chunk, 'write');
+    try {
+      await db.batch(chunk, 'write');
+    } catch (e) {
+      console.warn(`⚠️ Error insertando chunk en rates: ${e.message}. Reintentando inserción granular...`);
+      for (const stmt of chunk) {
+        try {
+          await db.execute(stmt);
+        } catch (innerErr) {
+          console.error(`❌ Error en registro individual:`, innerErr.message);
+        }
+      }
+    }
   }
 
   return statements.length;

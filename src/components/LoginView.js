@@ -14,7 +14,7 @@ export default function LoginView() {
     const [showLegacyLogin, setShowLegacyLogin] = useState(false);
     const googleBtnRef = useRef(null);
 
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "173592708065-1m316mss15guub2csg0f4jkhuoea0fct.apps.googleusercontent.com";
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
     const handleGoogleCallback = async (response) => {
         if (!response.credential) return;
@@ -57,7 +57,6 @@ export default function LoginView() {
 
     useEffect(() => {
         initGoogleBtn();
-        // Por si el script de Google tarda unos milisegundos en estar disponible
         const timer = setInterval(() => {
             if (window.google?.accounts?.id && googleBtnRef.current && !googleBtnRef.current.hasChildNodes()) {
                 initGoogleBtn();
@@ -72,20 +71,27 @@ export default function LoginView() {
         };
     }, [clientId]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const res = login(userInput, passInput);
+        const res = await login(userInput, passInput);
         if (!res.success) {
             setError(true);
-            setErrorMessage('Usuario o contraseña incorrectos');
-            setTimeout(() => setError(false), 2000);
+            setErrorMessage(res.message || 'Usuario o contraseña incorrectos');
+            setTimeout(() => setError(false), 2500);
         }
         setLoading(false);
     };
 
-    const handleGuestLogin = () => {
-        login('@invitado', 'invitado');
+    const handleGuestLogin = async () => {
+        setLoading(true);
+        const res = await login('@invitado', 'invitado');
+        if (!res.success) {
+            setError(true);
+            setErrorMessage(res.message || 'Error al iniciar sesión de invitado');
+            setTimeout(() => setError(false), 2500);
+        }
+        setLoading(false);
     };
 
     return (
@@ -118,7 +124,7 @@ export default function LoginView() {
                                 <span className="blue-gradient-text">FLOW</span>
                             </h1>
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#3ddc97]/15 border border-[#3ddc97]/30 text-[#3ddc97]">
-                                v2.0
+                                v2.1
                             </span>
                         </div>
                         <p className="text-[10px] text-slate-400 uppercase tracking-[0.25em] font-semibold mt-1">
@@ -142,10 +148,11 @@ export default function LoginView() {
                         <div className="space-y-2">
                             <button
                                 type="button"
+                                disabled={loading}
                                 onClick={handleGuestLogin}
-                                className="w-full bg-[#0d1527] hover:bg-slate-800 text-slate-200 hover:text-white font-bold uppercase py-3 rounded-xl transition-all active:scale-95 border border-white/10 text-xs tracking-wider"
+                                className="w-full bg-[#0d1527] hover:bg-slate-800 text-slate-200 hover:text-white font-bold uppercase py-3 rounded-xl transition-all active:scale-95 border border-white/10 text-xs tracking-wider disabled:opacity-50"
                             >
-                                Entrar como Invitado
+                                {loading ? 'Accediendo...' : 'Entrar como Invitado'}
                             </button>
                             <button
                                 type="button"

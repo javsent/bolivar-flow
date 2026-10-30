@@ -1,19 +1,23 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import https from 'https';
 import { saveRate, getLatestOverallRate } from '@/lib/ratesRepository.js';
 import { getVenezuelaDate } from '@/lib/db.js';
+import { scrapeBCV } from '@/lib/bcvScraper.js';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const forceFresh = searchParams.get('fresh') === '1' || request.headers.get('cache-control') === 'no-cache';
+
     let rates = {
       bcv: 0,
       euro: 0,
       binance: 0,
-      fecha: ""
+      fecha: "",
+      isStale: false,
     };
 
     const nowVET = getVenezuelaDate();
@@ -35,11 +39,8 @@ export async function GET() {
       console.warn("⚠️ No se pudo consultar tasa desde Turso:", dbErr.message);
     }
 
-    const agent = new https.Agent({ rejectUnauthorized: false });
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Accept-Language': 'es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3',
     };
 
     // ==============================================================
@@ -65,51 +66,18 @@ export async function GET() {
     })();
 
     // ==============================================================
-    // 3. INTENTO DE FAST-SYNC CON BCV (SOLO SI NO TENEMOS TASA DE HOY)
+    // 3. INTENTO DE FAST-SYNC CON BCV (SOLO SI NO TENEMOS TASA DE HOY O FORCEFRESH)
     // ==============================================================
     const fetchBCVPromise = (async () => {
-      // Si la DB ya tiene la tasa de hoy o una fecha adelantada, no hace falta raspar
-      if (rates.bcv > 0 && rates.fecha === todayStr) {
+      // Si la DB ya tiene la tasa de hoy y no se fuerza refresh, no hace falta raspar
+      if (!forceFresh && rates.bcv > 0 && rates.fecha === todayStr) {
         return null;
       }
 
       try {
-        const { data: htmlBCV } = await axios.get('http://www.bcv.org.ve/', { 
-          httpsAgent: agent, 
-          headers, 
-          timeout: 2500 
-        });
-        const $bcv = cheerio.load(htmlBCV);
-
-        const parseBCV = (selector) => {
-          const txt = $bcv(selector).find('strong').text().trim();
-          return parseFloat(txt.replace(',', '.')) || 0;
-        };
-
-        const liveUsd = parseBCV('#dolar');
-        const liveEuro = parseBCV('#euro');
-
-        let fechaTexto = $bcv('.pull-right.dinamico span').first().text().trim() ||
-          $bcv('.date-display-single').first().text().trim();
-
-        let liveFecha = "";
-        if (fechaTexto) {
-          const partes = fechaTexto.match(/(\d{1,2})\s+(de\s+)?(\w+)\s+(\d{4})/i);
-          if (partes) {
-            const meses = {
-              'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04', 'mayo': '05', 'junio': '06',
-              'julio': '07', 'agosto': '08', 'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
-            };
-            const dia = partes[1].padStart(2, '0');
-            const mesNombre = partes[3].toLowerCase();
-            const mes = meses[mesNombre] || '01';
-            const anio = partes[4];
-            liveFecha = `${dia}/${mes}/${anio}`;
-          }
-        }
-
-        if (liveUsd > 0) {
-          return { usd: liveUsd, euro: liveEuro, fecha: liveFecha || todayStr };
+        const liveBcv = await scrapeBCV(2500);
+        if (liveBcv && liveBcv.usd > 0) {
+          return liveBcv;
         }
       } catch (e) {
         // Silencioso: la DB ya tiene el dato de respaldo
@@ -117,7 +85,7 @@ export async function GET() {
       return null;
     })();
 
-    // Ejecutar ambas búsquedas en paralelo sin bloquear
+    // Ejecutar ambas búsquedas en paralelo
     const [binanceVal, liveBcv] = await Promise.all([fetchBinancePromise, fetchBCVPromise]);
 
     if (binanceVal > 0) {
@@ -127,9 +95,9 @@ export async function GET() {
     if (liveBcv && liveBcv.usd > 0) {
       rates.bcv = liveBcv.usd;
       rates.euro = liveBcv.euro;
-      rates.fecha = liveBcv.fecha;
+      rates.fecha = liveBcv.fecha || todayStr;
 
-      // Persistir en Turso en background sin retrasar la respuesta
+      // Persistir en Turso en background
       const dow = nowVET.getDay();
       saveRate({
         fecha: liveBcv.fecha,
@@ -144,10 +112,16 @@ export async function GET() {
       rates.fecha = todayStr;
     }
 
-    // Cache-Control con Edge Revalidation (Ultra-rápido en Vercel)
+    // Si la fecha de la tasa oficial difiere de hoy, marcar como stale
+    rates.isStale = Boolean(rates.fecha && rates.fecha !== todayStr);
+
+    const cacheHeader = forceFresh
+      ? 'no-cache, no-store, must-revalidate'
+      : 'public, s-maxage=60, stale-while-revalidate=300';
+
     return NextResponse.json(rates, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Cache-Control': cacheHeader,
         'Content-Type': 'application/json'
       }
     });

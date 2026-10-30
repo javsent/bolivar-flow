@@ -5,21 +5,49 @@ import fs from "fs";
 let clientInstance = null;
 
 /**
- * Returns the current Venezuela date string (YYYY-MM-DD) in America/Caracas timezone.
- * Use this everywhere instead of `new Date()` to avoid UTC offset issues on Vercel.
+ * Retorna un objeto Date con la hora y fecha de Venezuela (America/Caracas - UTC-4 sin DST).
+ * Utiliza Intl.DateTimeFormat para máxima precisión y robustez en entornos serverless.
  */
 export function getVenezuelaDate() {
-  const now = new Date();
-  // America/Caracas is UTC-4 (no DST)
-  const offsetMs = -4 * 60 * 60 * 1000;
-  const vetTime = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + offsetMs);
-  return vetTime;
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Caracas",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(new Date());
+  const map = {};
+  for (const p of parts) map[p.type] = p.value;
+
+  return new Date(`${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}:${map.second}`);
+}
+
+/**
+ * Retorna la URL base canónica de la aplicación para llamadas internas de servidor.
+ * Evita llamar a URLs de previews o puertos erróneos.
+ */
+export function getAppBaseUrl() {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
 }
 
 export function getDbClient() {
   if (clientInstance) return clientInstance;
 
-  // 1. URL Remota (Turso / libSQL) — REQUIRED for Vercel production
+  // 1. URL Remota (Turso / libSQL) — REQUERIDO para producción en Vercel
   if (process.env.DATABASE_URL) {
     console.log("🔗 Conectando a base de datos remota (Turso/libSQL)...");
     clientInstance = createClient({
@@ -33,7 +61,7 @@ export function getDbClient() {
   const isVercel = Boolean(process.env.VERCEL);
 
   if (isVercel) {
-    console.warn("⚠️ ADVERTENCIA: Usando SQLite efímero en /tmp. Las tasas NO se persistirán entre invocaciones. Configure DATABASE_URL para producción.");
+    console.warn("⚠️ ADVERTENCIA: Usando SQLite efímero en /tmp. Configure DATABASE_URL para producción.");
   }
 
   let dbFilePath;
