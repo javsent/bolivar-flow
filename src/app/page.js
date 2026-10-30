@@ -40,6 +40,8 @@ export default function CurrencyApp() {
   const dateInputRef = useRef(null);
   const shareRef = useRef(null);
   const historicoCache = useRef({});
+  const todayRatesRef = useRef(null);
+  const todayDisplayDateRef = useRef("");
 
   const [view, setView] = useState("calculator");
   const [amount, setAmount] = useState("");
@@ -118,14 +120,24 @@ export default function CurrencyApp() {
   };
 
   // --- FUNCIÓN PARA RESETEAR A HOY (LIVE) ---
-  const resetToToday = () => {
+  const resetToToday = (forceNetwork = false) => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
     const todayStr = `${year}-${month}-${day}`;
+    const todayDisplay = `${day}/${month}/${year}`;
 
     setSelectedDate(todayStr);
+
+    // Retorno INSTANTÁNEO si ya tenemos las tasas de hoy en memoria
+    if (todayRatesRef.current && !forceNetwork) {
+      setRates(todayRatesRef.current);
+      setDisplayDate(todayDisplayDateRef.current || todayDisplay);
+      setIsHistoricalRate(false);
+      return;
+    }
+
     fetchCurrentRates();
   };
 
@@ -206,38 +218,33 @@ export default function CurrencyApp() {
       if (!res.ok) throw new Error("Falló API");
       const data = await res.json();
 
+      let finalRates = data;
       if (tasaHoy && tasaHoy.fecha === todayStr) {
-        setRates({
+        finalRates = {
           ...data,
           bcv: tasaHoy.usd,
           euro: tasaHoy.euro,
-        });
-        setDisplayDate(todayStr);
-      } else if (data.bcv > 0) {
-        setRates(data);
-        setDisplayDate(todayStr);
-
-        if (data.fecha && data.fecha !== todayStr) {
-          showToast(`Tasa oficial del ${data.fecha}`);
-        }
-      } else {
+        };
+      } else if (data.bcv <= 0) {
         let tasaVigente = await findValidRateBackwards(now, 7, false);
-
         if (tasaVigente) {
-          setRates({
+          finalRates = {
             ...data,
             bcv: tasaVigente.usd,
             euro: tasaVigente.euro,
-          });
-          setDisplayDate(todayStr);
+          };
           if (tasaVigente.fecha !== todayStr) {
             showToast(`Tasa del día ${tasaVigente.fecha}`);
           }
-        } else {
-          setRates(data);
-          setDisplayDate(todayStr);
         }
+      } else if (data.fecha && data.fecha !== todayStr) {
+        showToast(`Tasa oficial del ${data.fecha}`);
       }
+
+      setRates(finalRates);
+      setDisplayDate(todayStr);
+      todayRatesRef.current = finalRates;
+      todayDisplayDateRef.current = todayStr;
 
       setIsHistoricalRate(false);
     } catch (e) {
@@ -522,7 +529,7 @@ export default function CurrencyApp() {
       doc.setTextColor(45, 212, 191);
       doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
-      doc.text("BOLÍVAR FLOW v2.0", 15, 18, { charSpace: 0 });
+      doc.text("BOLÍVAR FLOW v2.1", 15, 18, { charSpace: 0 });
 
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184);
@@ -600,7 +607,7 @@ export default function CurrencyApp() {
           doc.setFontSize(8);
           doc.setTextColor(150);
           doc.setFont("helvetica", "normal");
-          doc.text("rybak.Software © 2026 - Reporte generado por Bolívar Flow v2.0", 15, pageHeight - 10, { charSpace: 0 });
+          doc.text("rybak.Software © 2026 - Reporte generado por Bolívar Flow v2.1", 15, pageHeight - 10, { charSpace: 0 });
           doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageWidth - 15, pageHeight - 10, { align: "right", charSpace: 0 });
         },
         didParseCell: (d) => {
@@ -645,7 +652,7 @@ export default function CurrencyApp() {
         <p className="text-emerald-400 font-mono text-xs uppercase tracking-[0.3em] font-bold animate-pulse">
           Sincronizando Mercado...
         </p>
-        <span className="text-[10px] text-slate-500 font-mono mt-2">Bolívar Flow v2.0</span>
+        <span className="text-[10px] text-slate-500 font-mono mt-2">Bolívar Flow v2.1</span>
       </div>
     );
   }
@@ -666,7 +673,7 @@ export default function CurrencyApp() {
           </div>
           <div className="flex items-center gap-2 mt-2">
             <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-              v2.0
+              v2.1
             </span>
             <p className="text-xs text-slate-400 uppercase tracking-[0.4em] font-bold">
               Cotización Oficial
@@ -815,7 +822,7 @@ export default function CurrencyApp() {
       <div className="w-full max-w-md glass-card p-4 sm:p-6 rounded-3xl min-h-[540px] relative z-10 flex flex-col shadow-2xl animate-slide-up">
         {view === "calculator" ? (
           <div className="flex-1 flex flex-col">
-            {/* HEADER CON LOGO OFICIAL Y BADGE V2.1 */}
+            {/* HEADER CON LOGO OFICIAL */}
             <div className="flex justify-between items-center mb-4 sm:mb-5">
               <div className="flex items-center gap-2 sm:gap-2.5">
                 <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden border border-[#3ddc97]/30 bg-[#0d1527] flex items-center justify-center shadow-lg shadow-[#3ddc97]/10 shrink-0">
@@ -829,34 +836,14 @@ export default function CurrencyApp() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none">
-                      <span className="brand-gradient-text">BOLÍVAR</span>{" "}
-                      <span className="blue-gradient-text">FLOW</span>
-                    </h1>
-                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono font-black tracking-wider bg-[#3ddc97]/15 border border-[#3ddc97]/30 text-[#3ddc97]">
-                      v2.0
-                    </span>
-                  </div>
+                  <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none">
+                    <span className="brand-gradient-text">BOLÍVAR</span>{" "}
+                    <span className="blue-gradient-text">FLOW</span>
+                  </h1>
                   <span className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-semibold mt-0.5">
                     Monitor Cambiario
                   </span>
                 </div>
-              </div>
-
-              <div
-                className={`px-2 py-0.5 rounded-full text-[9px] font-bold border flex items-center gap-1 shrink-0 ${
-                  isHistoricalRate
-                    ? "bg-amber-500/10 text-amber-400 border-amber-500/40"
-                    : "bg-[#3ddc97]/10 text-[#3ddc97] border-[#3ddc97]/40"
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    isHistoricalRate ? "bg-amber-400" : "bg-[#3ddc97] animate-pulse"
-                  }`}
-                ></span>
-                {isHistoricalRate ? "HISTÓRICO" : "LIVE"}
               </div>
             </div>
 
@@ -1004,7 +991,7 @@ export default function CurrencyApp() {
 
                 {isHistoricalRate && (
                   <button
-                    onClick={resetToToday}
+                    onClick={() => resetToToday(false)}
                     title="Volver a tasa de hoy"
                     className="flex items-center justify-center w-10 h-10 rounded-xl border border-[#3ddc97]/40 bg-[#3ddc97]/15 text-[#3ddc97] hover:bg-[#3ddc97] hover:text-slate-950 transition-all active:scale-95"
                   >
@@ -1236,7 +1223,7 @@ export default function CurrencyApp() {
                 <CalendarDaysIcon className="h-5 w-5 text-emerald-400" /> Histórico Oficial BCV
               </h2>
               <span className="text-[10px] font-mono text-slate-500 bg-slate-900/60 px-2 py-0.5 rounded border border-white/5">
-                v2.0 Engine
+                v2.1 Engine
               </span>
             </div>
 
@@ -1377,7 +1364,7 @@ export default function CurrencyApp() {
 
         {/* PIE DE PÁGINA DISCRETO V2.1 */}
         <div className="mt-4 pt-3 border-t border-white/5 text-center flex items-center justify-between text-[10px] text-slate-500 font-mono">
-          <span className="text-[#3ddc97] font-bold">v2.0 • UltraFast</span>
+          <span className="text-[#3ddc97] font-bold">v2.1 • UltraFast</span>
           <span className="tracking-widest uppercase text-slate-400">RYBAK.SOFTWARE © 2026</span>
         </div>
       </div>

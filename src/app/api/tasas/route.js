@@ -13,8 +13,27 @@ export async function GET() {
       bcv: 0,
       euro: 0,
       binance: 0,
-      fecha: "" // Nueva propiedad para la fecha valor oficial
+      fecha: ""
     };
+
+    const nowVET = getVenezuelaDate();
+    const fd = String(nowVET.getDate()).padStart(2, '0');
+    const fm = String(nowVET.getMonth() + 1).padStart(2, '0');
+    const todayStr = `${fd}/${fm}/${nowVET.getFullYear()}`;
+
+    // ==============================================================
+    // 1. CARGA ULTRA-RÁPIDA DESDE BASE DE DATOS TURSO (< 20ms)
+    // ==============================================================
+    try {
+      const dbRate = await getLatestOverallRate();
+      if (dbRate && dbRate.usd > 0) {
+        rates.bcv = dbRate.usd;
+        rates.euro = dbRate.euro;
+        rates.fecha = dbRate.fecha;
+      }
+    } catch (dbErr) {
+      console.warn("⚠️ No se pudo consultar tasa desde Turso:", dbErr.message);
+    }
 
     const agent = new https.Agent({ rejectUnauthorized: false });
     const headers = {
@@ -23,204 +42,112 @@ export async function GET() {
       'Accept-Language': 'es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3',
     };
 
-    console.log("⚡ Actualizando tasas y fecha valor...");
+    // ==============================================================
+    // 2. PARALELO / BINANCE: DolarAPI primero (rápido ~150ms)
+    // ==============================================================
+    const fetchBinancePromise = (async () => {
+      try {
+        const { data: dataApi } = await axios.get('https://ve.dolarapi.com/v1/dolares', { timeout: 2500 });
+        const promedio = dataApi.find(d => d.fuente === 'paralelo')?.promedio || 0;
+        if (promedio > 0) return promedio;
+      } catch (e) {
+        // Fallback a ExchangeMonitor con timeout corto
+        try {
+          const res = await axios.get('https://exchangemonitor.net/venezuela/dolar-binance', { headers, timeout: 3000 });
+          const $ = cheerio.load(res.data);
+          let match = $('body').text().match(/\$1\s*Bs\.\s*([\d,]+)/i) || $('body').text().match(/Bs\.\s*([\d,]+)/);
+          if (match && match[1]) {
+            return parseFloat(match[1].replace(',', '.'));
+          }
+        } catch (emErr) {}
+      }
+      return 0;
+    })();
 
-    // ==========================================
-    // 1. BCV (OFICIAL) + EXTRACCIÓN DE FECHA VALOR
-    // ==========================================
-    try {
-      const { data: htmlBCV } = await axios.get('http://www.bcv.org.ve/', { httpsAgent: agent, headers, timeout: 8000 });
-      const $bcv = cheerio.load(htmlBCV);
-
-      const parseBCV = (selector) => {
-        const txt = $bcv(selector).find('strong').text().trim();
-        return parseFloat(txt.replace(',', '.')) || 0;
-      };
-
-      // Extraemos las tasas
-      rates.bcv = parseBCV('#dolar');
-      rates.euro = parseBCV('#euro');
-
-      // EXTRACCIÓN DE LA FECHA VALOR
-      let fechaTexto = $bcv('.pull-right.dinamico span').first().text().trim() ||
-        $bcv('.date-display-single').first().text().trim();
-
-      if (fechaTexto) {
-        const partes = fechaTexto.match(/(\d{1,2})\s+(de\s+)?(\w+)\s+(\d{4})/i);
-        if (partes) {
-          const meses = {
-            'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04', 'mayo': '05', 'junio': '06',
-            'julio': '07', 'agosto': '08', 'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
-          };
-          const dia = partes[1].padStart(2, '0');
-          const mesNombre = partes[3].toLowerCase();
-          const mes = meses[mesNombre] || '01';
-          const anio = partes[4];
-          rates.fecha = `${dia}/${mes}/${anio}`;
-        } else {
-          rates.fecha = fechaTexto;
-        }
+    // ==============================================================
+    // 3. INTENTO DE FAST-SYNC CON BCV (SOLO SI NO TENEMOS TASA DE HOY)
+    // ==============================================================
+    const fetchBCVPromise = (async () => {
+      // Si la DB ya tiene la tasa de hoy o una fecha adelantada, no hace falta raspar
+      if (rates.bcv > 0 && rates.fecha === todayStr) {
+        return null;
       }
 
-      console.log(`✅ BCV OK: USD=${rates.bcv}, EUR=${rates.euro}, Fecha Valor=${rates.fecha}`);
-    } catch (e) {
-      console.error("❌ Error BCV:", e.message);
-    }
-
-    // 0. OBTENER FECHA DE HOY (HORA VENEZUELA, UTC-4)
-    const nowVET = getVenezuelaDate();
-    const fd = String(nowVET.getDate()).padStart(2, '0');
-    const fm = String(nowVET.getMonth() + 1).padStart(2, '0');
-    const todayStr = `${fd}/${fm}/${nowVET.getFullYear()}`;
-
-    // ==========================================
-    // 2. FALLBACK: EXCHANGE MONITOR (OFICIAL BCV)
-    // ==========================================
-    if (rates.bcv === 0 || rates.euro === 0 || rates.fecha !== todayStr) {
-      console.log(`🔍 Intentando fallback con Exchange Monitor (Oficial)... [Motivo: ${rates.fecha !== todayStr ? "Fecha desactualizada" : "Tasa en 0"}]`);
       try {
-        const { data: htmlEM } = await axios.get('https://exchangemonitor.net/venezuela/dolar-bcv', { headers, timeout: 6000 });
-        const $em = cheerio.load(htmlEM);
-        
-        const emUSD_input = parseFloat($em('#input-amount-to').val()?.replace(',', '.') || '0');
-        const metaDesc = $em('meta[name="description"]').attr('content') || "";
-        const ogDesc = $em('meta[property="og:description"]').attr('content') || "";
-        const pageTitle = $em('title').text() || "";
-        
-        const extractFromText = (text) => {
-           if (!text) return 0;
-           const preciseMatch = text.match(/(?:es de|en|en\sBs\.|cotiza\sen)\s*([\d,.]+)/i);
-           if (preciseMatch) return parseFloat(preciseMatch[1].replace(',', '.')) || 0;
-           const generalMatch = text.match(/(\d{2,},\d{2})/);
-           if (generalMatch) return parseFloat(generalMatch[1].replace(',', '.')) || 0;
-           return 0;
+        const { data: htmlBCV } = await axios.get('http://www.bcv.org.ve/', { 
+          httpsAgent: agent, 
+          headers, 
+          timeout: 2500 
+        });
+        const $bcv = cheerio.load(htmlBCV);
+
+        const parseBCV = (selector) => {
+          const txt = $bcv(selector).find('strong').text().trim();
+          return parseFloat(txt.replace(',', '.')) || 0;
         };
 
-        let emUSD = emUSD_input;
-        if (emUSD === 0) emUSD = extractFromText(metaDesc);
-        if (emUSD === 0) emUSD = extractFromText(ogDesc);
-        if (emUSD === 0) emUSD = extractFromText(pageTitle);
+        const liveUsd = parseBCV('#dolar');
+        const liveEuro = parseBCV('#euro');
 
-        if (emUSD > 0) {
-          rates.bcv = emUSD;
-          $em('div, span, p, td, a').each((i, el) => {
-             const txt = $em(el).text().toUpperCase();
-             if (txt.includes('EURO') && (txt.includes('BS.') || txt.includes('VES'))) {
-                const val = extractFromText($em(el).text());
-                if (val > 0 && val > emUSD * 0.9) rates.euro = val; 
-             }
-          });
-        }
+        let fechaTexto = $bcv('.pull-right.dinamico span').first().text().trim() ||
+          $bcv('.date-display-single').first().text().trim();
 
-        if (rates.euro === 0 || rates.euro < rates.bcv) {
-          try {
-             const { data: htmlEM_EUR } = await axios.get('https://exchangemonitor.net/venezuela/euro-bcv', { headers, timeout: 4000 });
-             const $eur = cheerio.load(htmlEM_EUR);
-             const eurVal_input = parseFloat($eur('#input-amount-to').val()?.replace(',', '.') || '0');
-             const metaEur = $eur('meta[name="description"]').attr('content') || $eur('meta[property="og:description"]').attr('content') || "";
-             const eurVal_meta = extractFromText(metaEur);
-             const eurFinal = eurVal_input > 0 ? eurVal_input : eurVal_meta;
-             if (eurFinal > 0) rates.euro = eurFinal;
-          } catch(e) { }
-        }
-
-        if (rates.bcv > 0) {
-           console.log(`✅ Fallback EM OK: USD=${rates.bcv}, EUR=${rates.euro}`);
-           if (!rates.fecha) rates.fecha = todayStr;
-        }
-      } catch (e) {
-        console.error("❌ Error Fallback EM:", e.message);
-      }
-    }
-
-    // ==========================================
-    // 3. PERSISTENCIA INMEDIATA EN BASE DE DATOS
-    // ==========================================
-    if (rates.bcv > 0 && rates.fecha) {
-      try {
-        const dow = nowVET.getDay();
-        await saveRate({
-          fecha: rates.fecha,
-          usd: rates.bcv,
-          euro: rates.euro,
-          isWeekend: (dow === 0 || dow === 6),
-          source: 'Live-Sync'
-        });
-      } catch (dbErr) {
-        console.warn("⚠️ No se pudo persistir tasa en DB:", dbErr.message);
-      }
-    } else if (rates.bcv === 0) {
-      // Si todo scraping falló, rescatar la última tasa oficial de la base de datos
-      try {
-        const fallbackRate = await getLatestOverallRate();
-        if (fallbackRate) {
-          rates.bcv = fallbackRate.usd;
-          rates.euro = fallbackRate.euro;
-          rates.fecha = fallbackRate.fecha;
-          console.log(`📦 Rescatado de Base de Datos local: USD=${rates.bcv} (${rates.fecha})`);
-        }
-      } catch (dbResErr) { }
-    }
-
-    // ==========================================
-    // 4. EXCHANGE MONITOR (PARALELO Y BINANCE)
-    // ==========================================
-    const scrapeExchangeMonitor = async (url, label) => {
-      try {
-        const response = await axios.get(url, { headers, timeout: 6000 });
-        const html = response.data;
-        const $ = cheerio.load(html);
-
-        let precioEncontrado = 0;
-
-        $('h1, h2, h3, div').each((i, el) => {
-          if (precioEncontrado > 0) return;
-          const texto = $(el).text().trim();
-          const match = texto.match(/\$1\s*Bs\.\s*([\d,]+)/i);
-          if (match && match[1]) {
-            precioEncontrado = parseFloat(match[1].replace(',', '.'));
-          }
-        });
-
-        if (precioEncontrado === 0) {
-          const textoGeneral = $('body').text();
-          const matchGeneral = textoGeneral.match(/Bs\.\s*([\d,]+)/);
-          if (matchGeneral) {
-            precioEncontrado = parseFloat(matchGeneral[1].replace(',', '.'));
+        let liveFecha = "";
+        if (fechaTexto) {
+          const partes = fechaTexto.match(/(\d{1,2})\s+(de\s+)?(\w+)\s+(\d{4})/i);
+          if (partes) {
+            const meses = {
+              'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04', 'mayo': '05', 'junio': '06',
+              'julio': '07', 'agosto': '08', 'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
+            };
+            const dia = partes[1].padStart(2, '0');
+            const mesNombre = partes[3].toLowerCase();
+            const mes = meses[mesNombre] || '01';
+            const anio = partes[4];
+            liveFecha = `${dia}/${mes}/${anio}`;
           }
         }
 
-        return precioEncontrado;
+        if (liveUsd > 0) {
+          return { usd: liveUsd, euro: liveEuro, fecha: liveFecha || todayStr };
+        }
       } catch (e) {
-        console.error(`⚠️ Error scraping ${label}:`, e.message);
-        return 0;
+        // Silencioso: la DB ya tiene el dato de respaldo
       }
-    };
+      return null;
+    })();
 
-    const [precioBinance] = await Promise.all([
-      scrapeExchangeMonitor('https://exchangemonitor.net/venezuela/dolar-binance', 'Binance')
-    ]);
+    // Ejecutar ambas búsquedas en paralelo sin bloquear
+    const [binanceVal, liveBcv] = await Promise.all([fetchBinancePromise, fetchBCVPromise]);
 
-    if (precioBinance > 0) rates.binance = precioBinance;
+    if (binanceVal > 0) {
+      rates.binance = binanceVal;
+    }
 
-    // ==========================================
-    // 5. RESPALDO FINAL (BINANCE)
-    // ==========================================
-    if (rates.binance === 0) {
-      try {
-        const { data: dataApi } = await axios.get('https://ve.dolarapi.com/v1/dolares', { timeout: 4000 });
-        const promedio = dataApi.find(d => d.fuente === 'paralelo')?.promedio || 0;
-        if (rates.binance === 0) rates.binance = promedio;
-      } catch (e) { }
+    if (liveBcv && liveBcv.usd > 0) {
+      rates.bcv = liveBcv.usd;
+      rates.euro = liveBcv.euro;
+      rates.fecha = liveBcv.fecha;
+
+      // Persistir en Turso en background sin retrasar la respuesta
+      const dow = nowVET.getDay();
+      saveRate({
+        fecha: liveBcv.fecha,
+        usd: liveBcv.usd,
+        euro: liveBcv.euro,
+        isWeekend: (dow === 0 || dow === 6),
+        source: 'Live-Sync'
+      }).catch(() => {});
     }
 
     if (!rates.fecha) {
-      rates.fecha = `${fd}/${fm}/${nowVET.getFullYear()}`;
+      rates.fecha = todayStr;
     }
 
+    // Cache-Control con Edge Revalidation (Ultra-rápido en Vercel)
     return NextResponse.json(rates, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
         'Content-Type': 'application/json'
       }
     });
