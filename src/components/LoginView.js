@@ -14,7 +14,7 @@ export default function LoginView() {
     const [showLegacyLogin, setShowLegacyLogin] = useState(false);
     const googleBtnRef = useRef(null);
 
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "173592708065-1m316mss15guub2csg0f4jkhuoea0fct.apps.googleusercontent.com";
 
     const handleGoogleCallback = async (response) => {
         if (!response.credential) return;

@@ -188,43 +188,50 @@ export async function upsertGoogleUser({ id, email, name, avatar }) {
 
   const now = new Date().toISOString();
   const safeId = String(id || '');
-  const safeEmail = email || null;
+  const safeEmail = email ? email.toLowerCase().trim() : null;
   const safeName = name || email || 'Usuario';
   const safeAvatar = avatar || null;
 
-  // 1. Upsert usuario
-  await db.execute({
-    sql: `
-      INSERT INTO users (id, email, name, avatar, created_at)
-      VALUES (?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        email = excluded.email,
-        name = excluded.name,
-        avatar = excluded.avatar
-    `,
-    args: [safeId, safeEmail, safeName, safeAvatar, now],
+  // 1. Buscar si ya existe por ID o por Email para evitar conflictos de clave única
+  let targetId = safeId;
+  const existing = await db.execute({
+    sql: `SELECT id FROM users WHERE id = ? OR (email IS NOT NULL AND LOWER(email) = LOWER(?)) LIMIT 1`,
+    args: [safeId, safeEmail || ''],
   });
 
+  if (existing.rows.length > 0) {
+    targetId = String(existing.rows[0].id);
+    await db.execute({
+      sql: `UPDATE users SET email = COALESCE(?, email), name = ?, avatar = ? WHERE id = ?`,
+      args: [safeEmail, safeName, safeAvatar, targetId],
+    });
+  } else {
+    await db.execute({
+      sql: `INSERT INTO users (id, email, name, avatar, role, created_at) VALUES (?, ?, ?, ?, 'user', ?)`,
+      args: [safeId, safeEmail, safeName, safeAvatar, now],
+    });
+  }
+
   // 2. Obtener o crear settings
-  let settings = await getUserSettings(safeId);
+  let settings = await getUserSettings(targetId);
   if (!settings) {
     const defaultTemplate = "Pago de $usd $divisa equivalente a Bs. $bs, según tasa $fuente $tasa del $fecha.";
     await db.execute({
       sql: `INSERT INTO user_settings (user_id, concepto_template, default_rate, updated_at) VALUES (?, ?, ?, ?)`,
-      args: [safeId, defaultTemplate, 'bcv', now],
+      args: [targetId, defaultTemplate, 'bcv', now],
     });
     settings = {
-      user_id: safeId,
+      user_id: targetId,
       concepto_template: defaultTemplate,
       default_rate: 'bcv',
       updated_at: now,
     };
   }
 
-  const token = createSessionToken(safeId);
+  const token = createSessionToken(targetId);
 
   return {
-    user: { id: safeId, email: safeEmail, name: safeName, avatar: safeAvatar },
+    user: { id: targetId, email: safeEmail, name: safeName, avatar: safeAvatar },
     settings,
     token,
   };

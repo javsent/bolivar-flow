@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const savedUser = localStorage.getItem('bolivarflow_user');
+        const savedUser = localStorage.getItem('bolivarflow_user') || localStorage.getItem('bolivarflow_google_user');
         const savedSettings = localStorage.getItem('bolivarflow_user_settings');
         const savedToken = localStorage.getItem('bolivarflow_auth_token');
 
@@ -26,6 +26,11 @@ export function AuthProvider({ children }) {
                 setUserData(parsedUser);
                 setUser(parsedUser.name || parsedUser.email);
                 setIsAuth(true);
+
+                // Migrar clave si venía de la versión anterior
+                if (!localStorage.getItem('bolivarflow_user')) {
+                    localStorage.setItem('bolivarflow_user', savedUser);
+                }
 
                 if (savedSettings) {
                     try {
