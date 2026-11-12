@@ -161,8 +161,11 @@ export async function saveRatesBatch(ratesArray) {
     const iso = toIsoDate(item.fecha || item.displayFecha);
     const display = item.displayFecha || toDisplayDate(iso);
     if (iso && item.usd > 0) {
+      const isFill = item.source === 'Fill-Forward';
       statements.push({
-        sql: `INSERT OR REPLACE INTO rates (fecha, display_fecha, usd, euro, is_weekend, source, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        sql: isFill
+          ? `INSERT OR IGNORE INTO rates (fecha, display_fecha, usd, euro, is_weekend, source, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+          : `INSERT OR REPLACE INTO rates (fecha, display_fecha, usd, euro, is_weekend, source, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         args: [
           iso,
           display,

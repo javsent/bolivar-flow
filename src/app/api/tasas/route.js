@@ -28,8 +28,9 @@ export async function GET(request) {
     // ==============================================================
     // 1. CARGA ULTRA-RÁPIDA DESDE BASE DE DATOS TURSO (< 20ms)
     // ==============================================================
+    let dbRate = null;
     try {
-      const dbRate = await getLatestOverallRate();
+      dbRate = await getLatestOverallRate();
       if (dbRate && dbRate.usd > 0) {
         rates.bcv = dbRate.usd;
         rates.euro = dbRate.euro;
@@ -69,8 +70,9 @@ export async function GET(request) {
     // 3. INTENTO DE FAST-SYNC CON BCV (SOLO SI NO TENEMOS TASA DE HOY O FORCEFRESH)
     // ==============================================================
     const fetchBCVPromise = (async () => {
-      // Si la DB ya tiene la tasa de hoy y no se fuerza refresh, no hace falta raspar
-      if (!forceFresh && rates.bcv > 0 && rates.fecha === todayStr) {
+      // Si la DB ya tiene la tasa de hoy (y NO es un Fill-Forward provisional) y no se fuerza refresh, no hace falta raspar
+      const isTemporaryFill = dbRate?.source === 'Fill-Forward';
+      if (!forceFresh && rates.bcv > 0 && rates.fecha === todayStr && !isTemporaryFill) {
         return null;
       }
 
