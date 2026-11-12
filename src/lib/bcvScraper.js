@@ -46,7 +46,11 @@ export async function scrapeBCV(timeoutMs = 3000) {
 
     const parseRate = (selector) => {
       const txt = $(selector).find('strong').text().trim();
-      return parseFloat(txt.replace(',', '.')) || 0;
+      if (!txt) return 0;
+      // Eliminar separadores de miles (.) y convertir coma decimal (,) a punto (.)
+      // Soporta tanto tasas < 1.000 (ej: 911,6243) como >= 1.000 (ej: 1.009,3413)
+      const clean = txt.replace(/\./g, '').replace(',', '.');
+      return parseFloat(clean) || 0;
     };
 
     const usd = parseRate('#dolar');

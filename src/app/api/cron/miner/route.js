@@ -21,6 +21,14 @@ export function getKnownXlsLinks(year = new Date().getFullYear()) {
     );
 }
 
+const cleanNum = (v) => {
+    if (v === undefined || v === null || v === '') return 0;
+    if (typeof v === 'number') return isNaN(v) ? 0 : v;
+    const s = String(v).trim().replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+};
+
 /**
  * Descarga y parsea un archivo XLS del BCV.
  * Retorna un mapa { "YYYY-MM-DD": { usd, euro } } con las tasas encontradas.
@@ -46,8 +54,12 @@ async function fetchAndParseXls(url, httpsAgent) {
                 const iso = `${year}-${month}-${day}`;
                 const usdVal = sheet['G15']?.v;
                 const eurVal = sheet['G11']?.v;
-                if (usdVal && eurVal) {
-                    rates[iso] = { usd: parseFloat(usdVal), euro: parseFloat(eurVal) };
+                if (usdVal !== undefined && eurVal !== undefined) {
+                    const parsedUsd = cleanNum(usdVal);
+                    const parsedEur = cleanNum(eurVal);
+                    if (parsedUsd > 0 && parsedEur > 0) {
+                        rates[iso] = { usd: parsedUsd, euro: parsedEur };
+                    }
                 }
             }
         }

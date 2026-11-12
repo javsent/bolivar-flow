@@ -58,7 +58,7 @@ export async function GET(request) {
           const $ = cheerio.load(res.data);
           let match = $('body').text().match(/\$1\s*Bs\.\s*([\d,]+)/i) || $('body').text().match(/Bs\.\s*([\d,]+)/);
           if (match && match[1]) {
-            return parseFloat(match[1].replace(',', '.'));
+            return parseFloat(match[1].replace(/\./g, '').replace(',', '.'));
           }
         } catch (emErr) {}
       }
